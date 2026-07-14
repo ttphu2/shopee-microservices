@@ -1,2 +1,2 @@
 # shopee-microservices
-A practical microservices project inspired by Shopee platform, built with .NET 10 using Vertical Slice Architecture, CQRS, DDD, Event Sourcing, gRPC, MongoDB, RabbitMQ. 
+A practical microservices project inspired by the Shopee platform, built with .NET 10 using Vertical Slice Architecture, CQRS, DDD, Event Sourcing, gRPC, MongoDB, and RabbitMQ. On the DevOps side, the infrastructure is set up with a fully automated CI/CD pipeline using GitHub Actions, with services containerized with Docker and orchestrated via Kubernetes. An API Gateway is also included to support secure routing and scalable traffic, alongside complete system observability with OpenTelemetry, Prometheus, and Grafana.
