@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "Smartphone",
+    "Code": "SMARTPHONE",
+    "Description": "Mobile smartphones"
+  },
+  {
+    "Name": "Tablet",
+    "Code": "TABLET",
+    "Description": "Tablet devices"
+  },
+  {
+    "Name": "Laptop",
+    "Code": "LAPTOP",
+    "Description": "Laptop computers"
+  }
+]

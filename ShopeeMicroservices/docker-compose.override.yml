@@ -1,0 +1,15 @@
+version: '3.4'
+
+services:
+  catalogdb:
+    container_name: catalogdb
+    image: mongo:8
+    restart: always
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=Password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db

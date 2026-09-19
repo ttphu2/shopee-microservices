@@ -1,0 +1,51 @@
+@baseUrl = https://localhost:5050
+
+### Create product
+POST {{baseUrl}}/api/Product
+Content-Type: application/json
+
+{
+  "productCode": "IPHONE-DUO",
+  "name": "iPhone Duo",
+  "description": "Latest iPhone",
+  "brandId": "01995c00-0000-0000-0000-000000000001",
+  "categoryId": "01995c00-0000-0000-0000-000000000002",
+  "images": [
+    "https://example.com/iphone-duo.jpg"
+  ],
+  "variantOptions": [
+    {
+      "name": "Color",
+      "code": "color",
+      "values": [
+        "Titanium Blue",
+        "Black"
+      ]
+    },
+    {
+      "name": "Storage",
+      "code": "storage",
+      "values": [
+        "128GB",
+        "256GB"
+      ]
+    }
+  ],
+  "skus": [
+    {
+      "skuCode": "IPHONE-17-duo-256",
+      "price": 999.99,
+      "imageUrl": "https://example.com/iphone-17-black.jpg",
+      "attributes": [
+        {
+          "name": "Color",
+          "value": "Black"
+        },
+        {
+          "name": "Storage",
+          "value": "256GB"
+        }
+      ]
+    }
+  ]
+}

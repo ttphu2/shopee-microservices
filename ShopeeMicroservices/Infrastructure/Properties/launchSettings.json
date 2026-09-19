@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Infrastructure": {
+      "commandName": "Project"
+    },
+    "Product": {
+      "commandName": "Project",
+      "workingDirectory": "C:\\Users\\ADMIN\\source\\repos\\shopee-microservices\\ShopeeMicroservices\\Services\\ProductCatalog\\ProductCatalog.API"
+    }
+  }
+}

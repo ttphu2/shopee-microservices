@@ -1,0 +1,714 @@
+[
+  {
+    "ProductCode": "IPHONE-X",
+    "Name": "iPhone X",
+    "Description": "Apple iPhone X",
+    "BrandId": "00000000-0000-0000-0000-000000000000",
+    "CategoryId": "00000000-0000-0000-0000-000000000000",
+    "Images": [
+      "https://example.com/products/iphone-x/front.jpg",
+      "https://example.com/products/iphone-x/back.jpg"
+    ],
+    "VariantOptions": [
+      {
+        "Name": "Color",
+        "Code": "color",
+        "Values": [ "Space Gray", "Silver" ]
+      },
+      {
+        "Name": "Storage",
+        "Code": "storage",
+        "Values": [ "64GB", "256GB" ]
+      }
+    ],
+    "Skus": [
+      {
+        "SkuCode": "IPHONE-X-SG-64",
+        "Price": 799.00,
+        "StockQuantity": 25,
+        "ImageUrl": "https://example.com/products/iphone-x/space-gray.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Space Gray"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "64GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-X-SG-256",
+        "Price": 899.00,
+        "StockQuantity": 18,
+        "ImageUrl": "https://example.com/products/iphone-x/space-gray.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Space Gray"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "256GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-X-SL-64",
+        "Price": 799.00,
+        "StockQuantity": 20,
+        "ImageUrl": "https://example.com/products/iphone-x/silver.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Silver"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "64GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-X-SL-256",
+        "Price": 899.00,
+        "StockQuantity": 15,
+        "ImageUrl": "https://example.com/products/iphone-x/silver.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Silver"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "256GB"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ProductCode": "IPHONE-11",
+    "Name": "iPhone 11",
+    "Description": "Apple iPhone 11",
+    "BrandId": "00000000-0000-0000-0000-000000000000",
+    "CategoryId": "00000000-0000-0000-0000-000000000000",
+    "Images": [
+      "https://example.com/products/iphone-11/front.jpg",
+      "https://example.com/products/iphone-11/back.jpg"
+    ],
+    "VariantOptions": [
+      {
+        "Name": "Color",
+        "Code": "color",
+        "Values": [ "Black", "White" ]
+      },
+      {
+        "Name": "Storage",
+        "Code": "storage",
+        "Values": [ "64GB", "128GB" ]
+      }
+    ],
+    "Skus": [
+      {
+        "SkuCode": "IPHONE-11-BK-64",
+        "Price": 699.00,
+        "StockQuantity": 30,
+        "ImageUrl": "https://example.com/products/iphone-11/black.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Black"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "64GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-11-BK-128",
+        "Price": 749.00,
+        "StockQuantity": 24,
+        "ImageUrl": "https://example.com/products/iphone-11/black.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Black"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "128GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-11-WH-64",
+        "Price": 699.00,
+        "StockQuantity": 22,
+        "ImageUrl": "https://example.com/products/iphone-11/white.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "White"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "64GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-11-WH-128",
+        "Price": 749.00,
+        "StockQuantity": 19,
+        "ImageUrl": "https://example.com/products/iphone-11/white.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "White"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "128GB"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ProductCode": "IPHONE-12",
+    "Name": "iPhone 12",
+    "Description": "Apple iPhone 12",
+    "BrandId": "00000000-0000-0000-0000-000000000000",
+    "CategoryId": "00000000-0000-0000-0000-000000000000",
+    "Images": [
+      "https://example.com/products/iphone-12/front.jpg",
+      "https://example.com/products/iphone-12/back.jpg"
+    ],
+    "VariantOptions": [
+      {
+        "Name": "Color",
+        "Code": "color",
+        "Values": [ "Black", "Blue" ]
+      },
+      {
+        "Name": "Storage",
+        "Code": "storage",
+        "Values": [ "64GB", "128GB" ]
+      }
+    ],
+    "Skus": [
+      {
+        "SkuCode": "IPHONE-12-BK-64",
+        "Price": 799.00,
+        "StockQuantity": 35,
+        "ImageUrl": "https://example.com/products/iphone-12/black.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Black"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "64GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-12-BK-128",
+        "Price": 849.00,
+        "StockQuantity": 28,
+        "ImageUrl": "https://example.com/products/iphone-12/black.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Black"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "128GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-12-BL-64",
+        "Price": 799.00,
+        "StockQuantity": 26,
+        "ImageUrl": "https://example.com/products/iphone-12/blue.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Blue"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "64GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-12-BL-128",
+        "Price": 849.00,
+        "StockQuantity": 21,
+        "ImageUrl": "https://example.com/products/iphone-12/blue.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Blue"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "128GB"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ProductCode": "IPHONE-13",
+    "Name": "iPhone 13",
+    "Description": "Apple iPhone 13",
+    "BrandId": "00000000-0000-0000-0000-000000000000",
+    "CategoryId": "00000000-0000-0000-0000-000000000000",
+    "Images": [
+      "https://example.com/products/iphone-13/front.jpg",
+      "https://example.com/products/iphone-13/back.jpg"
+    ],
+    "VariantOptions": [
+      {
+        "Name": "Color",
+        "Code": "color",
+        "Values": [ "Midnight", "Blue" ]
+      },
+      {
+        "Name": "Storage",
+        "Code": "storage",
+        "Values": [ "128GB", "256GB" ]
+      }
+    ],
+    "Skus": [
+      {
+        "SkuCode": "IPHONE-13-MN-128",
+        "Price": 799.00,
+        "StockQuantity": 40,
+        "ImageUrl": "https://example.com/products/iphone-13/midnight.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Midnight"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "128GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-13-MN-256",
+        "Price": 899.00,
+        "StockQuantity": 32,
+        "ImageUrl": "https://example.com/products/iphone-13/midnight.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Midnight"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "256GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-13-BL-128",
+        "Price": 799.00,
+        "StockQuantity": 27,
+        "ImageUrl": "https://example.com/products/iphone-13/blue.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Blue"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "128GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-13-BL-256",
+        "Price": 899.00,
+        "StockQuantity": 23,
+        "ImageUrl": "https://example.com/products/iphone-13/blue.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Blue"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "256GB"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ProductCode": "IPHONE-14",
+    "Name": "iPhone 14",
+    "Description": "Apple iPhone 14",
+    "BrandId": "00000000-0000-0000-0000-000000000000",
+    "CategoryId": "00000000-0000-0000-0000-000000000000",
+    "Images": [
+      "https://example.com/products/iphone-14/front.jpg",
+      "https://example.com/products/iphone-14/back.jpg"
+    ],
+    "VariantOptions": [
+      {
+        "Name": "Color",
+        "Code": "color",
+        "Values": [ "Midnight", "Blue" ]
+      },
+      {
+        "Name": "Storage",
+        "Code": "storage",
+        "Values": [ "128GB", "256GB" ]
+      }
+    ],
+    "Skus": [
+      {
+        "SkuCode": "IPHONE-14-MN-128",
+        "Price": 899.00,
+        "StockQuantity": 38,
+        "ImageUrl": "https://example.com/products/iphone-14/midnight.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Midnight"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "128GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-14-MN-256",
+        "Price": 999.00,
+        "StockQuantity": 29,
+        "ImageUrl": "https://example.com/products/iphone-14/midnight.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Midnight"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "256GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-14-BL-128",
+        "Price": 899.00,
+        "StockQuantity": 25,
+        "ImageUrl": "https://example.com/products/iphone-14/blue.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Blue"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "128GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-14-BL-256",
+        "Price": 999.00,
+        "StockQuantity": 20,
+        "ImageUrl": "https://example.com/products/iphone-14/blue.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Blue"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "256GB"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ProductCode": "IPHONE-15",
+    "Name": "iPhone 15",
+    "Description": "Apple iPhone 15",
+    "BrandId": "00000000-0000-0000-0000-000000000000",
+    "CategoryId": "00000000-0000-0000-0000-000000000000",
+    "Images": [
+      "https://example.com/products/iphone-15/front.jpg",
+      "https://example.com/products/iphone-15/back.jpg"
+    ],
+    "VariantOptions": [
+      {
+        "Name": "Color",
+        "Code": "color",
+        "Values": [ "Black", "Blue" ]
+      },
+      {
+        "Name": "Storage",
+        "Code": "storage",
+        "Values": [ "128GB", "256GB" ]
+      }
+    ],
+    "Skus": [
+      {
+        "SkuCode": "IPHONE-15-BK-128",
+        "Price": 899.00,
+        "StockQuantity": 45,
+        "ImageUrl": "https://example.com/products/iphone-15/black.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Black"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "128GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-15-BK-256",
+        "Price": 999.00,
+        "StockQuantity": 36,
+        "ImageUrl": "https://example.com/products/iphone-15/black.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Black"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "256GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-15-BL-128",
+        "Price": 899.00,
+        "StockQuantity": 31,
+        "ImageUrl": "https://example.com/products/iphone-15/blue.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Blue"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "128GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-15-BL-256",
+        "Price": 999.00,
+        "StockQuantity": 26,
+        "ImageUrl": "https://example.com/products/iphone-15/blue.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Blue"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "256GB"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ProductCode": "IPHONE-16",
+    "Name": "iPhone 16",
+    "Description": "Apple iPhone 16",
+    "BrandId": "00000000-0000-0000-0000-000000000000",
+    "CategoryId": "00000000-0000-0000-0000-000000000000",
+    "Images": [
+      "https://example.com/products/iphone-16/front.jpg",
+      "https://example.com/products/iphone-16/back.jpg"
+    ],
+    "VariantOptions": [
+      {
+        "Name": "Color",
+        "Code": "color",
+        "Values": [ "Black", "Ultramarine" ]
+      },
+      {
+        "Name": "Storage",
+        "Code": "storage",
+        "Values": [ "128GB", "256GB" ]
+      }
+    ],
+    "Skus": [
+      {
+        "SkuCode": "IPHONE-16-BK-128",
+        "Price": 999.00,
+        "StockQuantity": 50,
+        "ImageUrl": "https://example.com/products/iphone-16/black.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Black"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "128GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-16-BK-256",
+        "Price": 1099.00,
+        "StockQuantity": 42,
+        "ImageUrl": "https://example.com/products/iphone-16/black.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Black"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "256GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-16-UB-128",
+        "Price": 999.00,
+        "StockQuantity": 34,
+        "ImageUrl": "https://example.com/products/iphone-16/ultramarine.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Ultramarine"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "128GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-16-UB-256",
+        "Price": 1099.00,
+        "StockQuantity": 28,
+        "ImageUrl": "https://example.com/products/iphone-16/ultramarine.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Ultramarine"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "256GB"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ProductCode": "IPHONE-17",
+    "Name": "iPhone 17",
+    "Description": "Apple iPhone 17",
+    "BrandId": "00000000-0000-0000-0000-000000000000",
+    "CategoryId": "00000000-0000-0000-0000-000000000000",
+    "Images": [
+      "https://example.com/products/iphone-17/front.jpg",
+      "https://example.com/products/iphone-17/back.jpg"
+    ],
+    "VariantOptions": [
+      {
+        "Name": "Color",
+        "Code": "color",
+        "Values": [ "Black", "Titanium Blue" ]
+      },
+      {
+        "Name": "Storage",
+        "Code": "storage",
+        "Values": [ "256GB", "512GB" ]
+      }
+    ],
+    "Skus": [
+      {
+        "SkuCode": "IPHONE-17-BK-256",
+        "Price": 1099.00,
+        "StockQuantity": 55,
+        "ImageUrl": "https://example.com/products/iphone-17/black.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Black"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "256GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-17-BK-512",
+        "Price": 1299.00,
+        "StockQuantity": 40,
+        "ImageUrl": "https://example.com/products/iphone-17/black.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Black"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "512GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-17-TB-256",
+        "Price": 1099.00,
+        "StockQuantity": 37,
+        "ImageUrl": "https://example.com/products/iphone-17/titanium-blue.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Titanium Blue"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "256GB"
+          }
+        ]
+      },
+      {
+        "SkuCode": "IPHONE-17-TB-512",
+        "Price": 1299.00,
+        "StockQuantity": 24,
+        "ImageUrl": "https://example.com/products/iphone-17/titanium-blue.jpg",
+        "Attributes": [
+          {
+            "AttributeCode": "color",
+            "Value": "Titanium Blue"
+          },
+          {
+            "AttributeCode": "storage",
+            "Value": "512GB"
+          }
+        ]
+      }
+    ]
+  }
+]

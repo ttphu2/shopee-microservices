@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "Apple",
+    "Code": "APPLE",
+    "Description": "Apple Inc."
+  },
+  {
+    "Name": "Samsung",
+    "Code": "SAMSUNG",
+    "Description": "Samsung Electronics"
+  },
+  {
+    "Name": "Google",
+    "Code": "GOOGLE",
+    "Description": "Google"
+  }
+]

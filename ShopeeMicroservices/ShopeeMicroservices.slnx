@@ -1,9 +1,16 @@
 <Solution>
-  <Folder Name="/Services/" />
+ <Folder Name="/Services/" />
   <Folder Name="/Services/ProductCatalog/">
-    <Project Path="ProductCatalog/ProductCatalog.API/ProductCatalog.API.csproj" />
-    <Project Path="ProductCatalog/ProductCatalog.Application/ProductCatalog.Application.csproj" />
-    <Project Path="ProductCatalog/ProductCatalog.Domain/ProductCatalog.Domain.csproj" />
-    <Project Path="ProductCatalog/ProductCatalog.Infrastructure/ProductCatalog.Infrastructure.csproj" />
+    <Project Path="Services/ProductCatalog/ProductCatalog.API/ProductCatalog.API.csproj" />
+    <Project Path="Services/ProductCatalog/ProductCatalog.Application/ProductCatalog.Application.csproj" />
+    <Project Path="Services/ProductCatalog/ProductCatalog.Domain/ProductCatalog.Domain.csproj" />
+    <Project Path="Services/ProductCatalog/ProductCatalog.Infrastructure/ProductCatalog.Infrastructure.csproj" />
   </Folder>
+ <Folder Name="/Infrastructure/">
+    <Project Path="Infrastructure/Infrastructure.csproj" Id="c0c6ecd1-d230-498e-ad95-bd48408aefb8" />
+  </Folder>
+ <Project Path="docker-compose.dcproj">
+  <Build />
+ </Project>
+  
 </Solution>
