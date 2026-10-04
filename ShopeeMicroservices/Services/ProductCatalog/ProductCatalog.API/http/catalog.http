@@ -1,4 +1,4 @@
-@baseUrl = https://localhost:5050
+@baseUrl = http://localhost:8000
 
 ### Create product
 POST {{baseUrl}}/api/Product
@@ -8,8 +8,8 @@ Content-Type: application/json
   "productCode": "IPHONE-DUO",
   "name": "iPhone Duo",
   "description": "Latest iPhone",
-  "brandId": "01995c00-0000-0000-0000-000000000001",
-  "categoryId": "01995c00-0000-0000-0000-000000000002",
+  "brandId": "01a0b787-1838-7060-a3ea-f20d5d79f61a",
+  "categoryId": "01a0b787-18d1-73a9-a140-791dbb5fd1a8",
   "images": [
     "https://example.com/iphone-duo.jpg"
   ],
@@ -33,7 +33,7 @@ Content-Type: application/json
   ],
   "skus": [
     {
-      "skuCode": "IPHONE-17-duo-256",
+      "skuCode": "IPHONE-DUO-256",
       "price": 999.99,
       "imageUrl": "https://example.com/iphone-17-black.jpg",
       "attributes": [
