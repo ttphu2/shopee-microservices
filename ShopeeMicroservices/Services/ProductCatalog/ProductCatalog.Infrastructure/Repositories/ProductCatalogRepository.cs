@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using ProductCatalog.Domain.Entities;
+using ProductCatalog.Domain.Products;
 using ProductCatalog.Domain.Repositories;
 using ProductCatalog.Infrastructure.Settings;
 
@@ -30,7 +31,7 @@ namespace ProductCatalog.Infrastructure.Repositories
             return product;
         }
 
-        public async Task CreateSkusAsync(IReadOnlyCollection<ProductSku> skus)
+        public async Task CreateSkusAsync(IReadOnlyCollection<ProductSku> skus, CancellationToken cancellationToken = default)
         {
             if (skus.Count == 0)
             {
@@ -40,24 +41,48 @@ namespace ProductCatalog.Infrastructure.Repositories
             await _skus.InsertManyAsync(skus);
         }
 
-        public async Task<IEnumerable<ProductSpu>> GetAllAsync()
+        public async Task<IEnumerable<ProductSpu>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             return await _products.Find(p => true).ToListAsync();
         }
 
-        public async Task<ProductSpu> GetProductAsync(string productId)
+        public async Task<ProductDetails?> GetProductWithSkusAsync(
+            string productId,
+            CancellationToken cancellationToken = default)
         {
-            return await _products.Find(p => p.Id == productId).FirstOrDefaultAsync();
+            return await _products
+                .Aggregate()
+                .Match(x => x.Id == productId)
+                .Lookup<ProductSpu, ProductSku, ProductDetails>(
+                    _skus,
+                    spu => spu.Id,
+                    sku => sku.SpuId,
+                    result => result.Skus)
+                .FirstOrDefaultAsync(cancellationToken);
         }
 
-        public async Task<ProductBrand> GetBrandByIdAsync(string brandId)
+        public async Task<ProductBrand> GetBrandByIdAsync(string brandId, CancellationToken cancellationToken = default)
         {
             return await _brands.Find(b => b.Id == brandId).FirstOrDefaultAsync();
         }
 
-        public async Task<ProductType> GetCategoryByIdAsync(string typeId)
+        public async Task<ProductType> GetCategoryByIdAsync(string typeId, CancellationToken cancellationToken = default)
         {
             return await _types.Find(t => t.Id == typeId).FirstOrDefaultAsync();
+        }
+
+        public async Task<ProductBrand?> GetBrandByNameAsync(string name, CancellationToken cancellationToken = default)
+        {
+            return await _brands
+                .Find(x => x.Name == name)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<ProductType?> GetCategoryByNameAsync(string name, CancellationToken cancellationToken = default)
+        {
+            return await _types
+                .Find(x => x.Name == name)
+                .FirstOrDefaultAsync();
         }
     }
 }
