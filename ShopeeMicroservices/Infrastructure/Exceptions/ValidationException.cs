@@ -1,4 +1,4 @@
-﻿namespace ProductCatalog.Application.Exceptions;
+﻿namespace Infrastructure.Exceptions;
 
 public sealed class ValidationException : Exception
 {

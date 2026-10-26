@@ -20,17 +20,7 @@
             IEnumerable<VariantOption>? variantOptions = null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(productCode);
-            ArgumentException.ThrowIfNullOrWhiteSpace(name);
-
-            if (string.IsNullOrEmpty(brandId))
-            {
-                throw new ArgumentException("BrandId is required.", nameof(brandId));
-            }
-
-            if (string.IsNullOrEmpty(categoryId))
-            {
-                throw new ArgumentException("CategoryId is required.", nameof(categoryId));
-            }
+            EnsureRequiredDetails(name, brandId, categoryId);
 
             return new ProductSpu
             {
@@ -42,6 +32,42 @@
                 Images = images?.ToList() ?? [],
                 VariantOptions = variantOptions?.ToList() ?? []
             };
+        }
+
+        // ProductCode is the product's business key and is not changed by an update.
+        public void Update(
+            string name,
+            string description,
+            string brandId,
+            string categoryId,
+            IEnumerable<string>? images,
+            IEnumerable<VariantOption>? variantOptions,
+            DateTime modifiedAt)
+        {
+            EnsureRequiredDetails(name, brandId, categoryId);
+
+            Name = name;
+            Description = description ?? string.Empty;
+            BrandId = brandId;
+            CategoryId = categoryId;
+            Images = images?.ToList() ?? [];
+            VariantOptions = variantOptions?.ToList() ?? [];
+            LastModified = modifiedAt;
+        }
+
+        private static void EnsureRequiredDetails(string name, string brandId, string categoryId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
+            if (string.IsNullOrEmpty(brandId))
+            {
+                throw new ArgumentException("BrandId is required.", nameof(brandId));
+            }
+
+            if (string.IsNullOrEmpty(categoryId))
+            {
+                throw new ArgumentException("CategoryId is required.", nameof(categoryId));
+            }
         }
     }
 

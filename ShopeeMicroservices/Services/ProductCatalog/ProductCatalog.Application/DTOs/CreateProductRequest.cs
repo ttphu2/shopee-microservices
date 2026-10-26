@@ -12,13 +12,6 @@ namespace ProductCatalog.Application.DTOs
 
         public List<string> Images { get; init; } = [];
         public List<VariantOption> VariantOptions { get; init; } = [];
-        public List<CreateProductSkuRequest> Skus { get; init; } = [];
+        public List<ProductSkuRequest> Skus { get; init; } = [];
     }
-
-    public record CreateProductSkuRequest(
-        string SkuCode,
-        decimal Price,
-        string? ImageUrl,
-        IReadOnlyCollection<SkuAttribute> Attributes
-    );
 }

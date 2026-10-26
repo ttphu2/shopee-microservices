@@ -35,6 +35,19 @@ namespace ProductCatalog.Domain.Entities
             sku.Attributes.AddRange(attributes);
             return sku;
         }
+
+        // SpuId and SkuCode identify the SKU and are not changed by an update.
+        public void Update(
+            decimal price,
+            string? imageUrl,
+            IEnumerable<SkuAttribute> attributes,
+            DateTime modifiedAt)
+        {
+            Price = price;
+            ImageUrl = imageUrl;
+            Attributes = attributes.ToList();
+            LastModified = modifiedAt;
+        }
     }
 
     public class SkuAttribute

@@ -1,4 +1,5 @@
 ﻿using Infrastructure.Abstractions.Messaging;
+using ProductCatalog.Application.Errors;
 using ProductCatalog.Application.Handlers.Base;
 using ProductCatalog.Domain.Abstractions;
 using ProductCatalog.Domain.Entities;
@@ -17,12 +18,25 @@ namespace ProductCatalog.Application.Handlers.CreateProductCommandHandler
 
         protected override async Task<Result<CreateProductResult>> ExecuteAsync(CreateProductCommand request, CancellationToken cancellationToken)
         {
-            var brand = await _productCatalogRepository.GetBrandByIdAsync(request.BrandId);
-            var type = await _productCatalogRepository.GetCategoryByIdAsync(request.CategoryId);
-
-            if (brand is null || type is null)
+            if (await _productCatalogRepository.GetBrandByIdAsync(request.BrandId, cancellationToken) is null)
             {
-                throw new ApplicationException("Invalid Brand or Type Specified");
+                return Result.Failure<CreateProductResult>(ProductErrors.BrandNotFound);
+            }
+
+            if (await _productCatalogRepository.GetCategoryByIdAsync(request.CategoryId, cancellationToken) is null)
+            {
+                return Result.Failure<CreateProductResult>(ProductErrors.CategoryNotFound);
+            }
+
+            var requestedSkuCodes = request.Skus.Select(sku => sku.SkuCode).ToList();
+            var conflictingSkuCodes = (await _productCatalogRepository.GetSkusByCodesAsync(requestedSkuCodes, cancellationToken))
+                .Select(sku => sku.SkuCode)
+                .Distinct()
+                .ToList();
+
+            if (conflictingSkuCodes.Count > 0)
+            {
+                return Result.Failure<CreateProductResult>(ProductErrors.SkuCodeConflict(conflictingSkuCodes));
             }
 
             var productSpu = ProductSpu.Create(
@@ -34,7 +48,7 @@ namespace ProductCatalog.Application.Handlers.CreateProductCommandHandler
                 request.Images,
                 request.VariantOptions);
 
-            var newProduct = await _productCatalogRepository.CreateProductAsync(productSpu);
+            var newProduct = await _productCatalogRepository.CreateProductAsync(productSpu, cancellationToken);
 
             var skus = request.Skus
                 .Select(sku => ProductSku.Create(
@@ -45,7 +59,7 @@ namespace ProductCatalog.Application.Handlers.CreateProductCommandHandler
                     sku.Attributes))
                 .ToList();
 
-            await _productCatalogRepository.CreateSkusAsync(skus);
+            await _productCatalogRepository.CreateSkusAsync(skus, cancellationToken);
 
             return Result.Success(new CreateProductResult());
         }

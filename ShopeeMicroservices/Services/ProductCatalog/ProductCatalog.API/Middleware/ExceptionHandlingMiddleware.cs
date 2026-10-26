@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using ProductCatalog.Application.Exceptions;
+﻿using Infrastructure.Exceptions;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ProductCatalog.Api.Middleware;
 

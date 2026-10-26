@@ -32,7 +32,10 @@ public static class DependencyInjection
             return new MongoClient(settings.ConnectionString);
         });
 
-        services.AddScoped<IUnitOfWork, MongoUnitOfWork>();
+        // One instance per scope, so repositories see the session the unit of work started.
+        services.AddScoped<MongoUnitOfWork>();
+        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<MongoUnitOfWork>());
+        services.AddScoped<IMongoSessionAccessor>(sp => sp.GetRequiredService<MongoUnitOfWork>());
 
         services.AddScoped<IProductCatalogRepository, ProductCatalogRepository>();
     }

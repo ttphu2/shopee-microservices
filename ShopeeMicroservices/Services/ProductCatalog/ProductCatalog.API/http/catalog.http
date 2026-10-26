@@ -1,4 +1,9 @@
 @baseUrl = http://localhost:8000
+# Brand and category ids are generated when the database is seeded; replace them with ids from your database.
+@brandId = 01a0b787-1838-7060-a3ea-f20d5d79f61a
+@categoryId = 01a0b787-18d1-73a9-a140-791dbb5fd1a8
+# Id of an existing product, e.g. from GET {{baseUrl}}/api/Product
+@productId = replace-with-product-id
 
 ### Create product
 POST {{baseUrl}}/api/Product
@@ -8,8 +13,8 @@ Content-Type: application/json
   "productCode": "IPHONE-DUO",
   "name": "iPhone Duo",
   "description": "Latest iPhone",
-  "brandId": "01a0b787-1838-7060-a3ea-f20d5d79f61a",
-  "categoryId": "01a0b787-18d1-73a9-a140-791dbb5fd1a8",
+  "brandId": "{{brandId}}",
+  "categoryId": "{{categoryId}}",
   "images": [
     "https://example.com/iphone-duo.jpg"
   ],
@@ -38,14 +43,72 @@ Content-Type: application/json
       "imageUrl": "https://example.com/iphone-17-black.jpg",
       "attributes": [
         {
-          "name": "Color",
+          "attributeCode": "color",
           "value": "Black"
         },
         {
-          "name": "Storage",
+          "attributeCode": "storage",
           "value": "256GB"
         }
       ]
     }
   ]
 }
+
+### Get product
+GET {{baseUrl}}/api/Product/{{productId}}
+
+### Update product (replaces the body and the SKU set; SKUs are matched by skuCode, productCode cannot change)
+PUT {{baseUrl}}/api/Product/{{productId}}
+Content-Type: application/json
+
+{
+  "name": "iPhone Duo",
+  "description": "Latest iPhone, now in blue",
+  "brandId": "{{brandId}}",
+  "categoryId": "{{categoryId}}",
+  "images": [
+    "https://example.com/iphone-duo.jpg"
+  ],
+  "variantOptions": [
+    {
+      "name": "Color",
+      "code": "color",
+      "values": [
+        "Titanium Blue",
+        "Black"
+      ]
+    },
+    {
+      "name": "Storage",
+      "code": "storage",
+      "values": [
+        "128GB",
+        "256GB"
+      ]
+    }
+  ],
+  "skus": [
+    {
+      "skuCode": "IPHONE-DUO-256",
+      "price": 949.99,
+      "imageUrl": "https://example.com/iphone-17-black.jpg",
+      "attributes": [
+        { "attributeCode": "color", "value": "Black" },
+        { "attributeCode": "storage", "value": "256GB" }
+      ]
+    },
+    {
+      "skuCode": "IPHONE-DUO-BLUE-128",
+      "price": 899.99,
+      "imageUrl": "https://example.com/iphone-17-blue.jpg",
+      "attributes": [
+        { "attributeCode": "color", "value": "Titanium Blue" },
+        { "attributeCode": "storage", "value": "128GB" }
+      ]
+    }
+  ]
+}
+
+### Delete product (and all of its SKUs)
+DELETE {{baseUrl}}/api/Product/{{productId}}

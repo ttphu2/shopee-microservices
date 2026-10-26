@@ -1,9 +1,9 @@
 ﻿using FluentValidation;
 using Infrastructure.Abstractions.Messaging;
+using Infrastructure.Exceptions;
 using MediatR;
-using ProductCatalog.Application.Exceptions;
 
-namespace ProductCatalog.Application.Abstractions.Behaviors;
+namespace Infrastructure.Abstractions.Behaviors;
 
 public class ValidationBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>

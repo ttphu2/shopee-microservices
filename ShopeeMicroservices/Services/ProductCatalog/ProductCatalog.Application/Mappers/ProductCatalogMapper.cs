@@ -24,6 +24,21 @@ namespace ProductCatalog.Application.Mappers
 
         public static IList<ProductSpuDto> ToDtoList(this IEnumerable<ProductSpu> products) => products.Select(p => p.ToDto()).ToList();
 
+        public static ProductDetailsDto ToDetailsDto(
+            this ProductSpu product,
+            IReadOnlyList<ProductSku> skus,
+            ProductBrand? brand,
+            ProductType? type)
+        {
+            return new ProductDetailsDto(
+                product.ToDto(),
+                brand?.ToDto(),
+                type?.ToDto(),
+                skus.Select(sku => sku.ToDto()).ToList(),
+                skus.Count == 0 ? null : skus.Min(sku => sku.Price),
+                skus.Count == 0 ? null : skus.Max(sku => sku.Price));
+        }
+
         public static ProductSkuDto ToDto(this ProductSku entity)
         {
             return new ProductSkuDto(

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Driver;
 using ProductCatalog.API.Extensions;
 using ProductCatalog.Application;
 using ProductCatalog.Infrastructure;
@@ -28,10 +29,11 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
-//Seed Mongo db on startup 
+//Create indexes and seed Mongo db on startup
 using (var scope = app.Services.CreateScope())
 {
     var options = scope.ServiceProvider.GetRequiredService<IOptions<DatabaseSettings>>();
+    await DatabaseIndexes.EnsureAsync(scope.ServiceProvider.GetRequiredService<IMongoClient>(), options);
     await DatabaseSeeder.SeedAsync(options);
 }
 

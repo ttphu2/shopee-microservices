@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
+using Infrastructure.Abstractions.Behaviors;
 using Microsoft.Extensions.DependencyInjection;
-using ProductCatalog.Application.Abstractions.Behaviors;
 
 namespace ProductCatalog.Application;
 
@@ -12,9 +12,7 @@ public static class DependencyInjection
         {
             configuration.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly);
 
-            configuration.AddOpenBehavior(typeof(LoggingBehavior<,>));
-
-            configuration.AddOpenBehavior(typeof(ValidationBehavior<,>));
+            configuration.AddDefaultPipelineBehaviors();
         });
 
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);

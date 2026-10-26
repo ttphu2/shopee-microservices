@@ -1,4 +1,5 @@
 ﻿using Infrastructure.Abstractions.Messaging;
+using ProductCatalog.Application.Handlers.Common;
 using ProductCatalog.Domain.Entities;
 
 namespace ProductCatalog.Application.Handlers.CreateProductCommandHandler
@@ -11,14 +12,7 @@ namespace ProductCatalog.Application.Handlers.CreateProductCommandHandler
         string CategoryId,
         List<string> Images,
         List<VariantOption> VariantOptions,
-        List<CreateProductSkuCommand> Skus
-    ) : ICommand<CreateProductResult>;
-
-    public record CreateProductSkuCommand(
-        string SkuCode,
-        decimal Price,
-        string? ImageUrl,
-        IReadOnlyCollection<SkuAttribute> Attributes
-    );
+        List<ProductSkuCommand> Skus
+    ) : ICommand<CreateProductResult>, IProductCommand;
 }
 

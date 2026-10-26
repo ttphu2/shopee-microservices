@@ -3,7 +3,7 @@ using ProductCatalog.Domain.Abstractions;
 
 namespace ProductCatalog.Infrastructure.Repositories
 {
-    public class MongoUnitOfWork : IUnitOfWork
+    public class MongoUnitOfWork : IUnitOfWork, IMongoSessionAccessor
     {
         private readonly IMongoClient _mongoClient;
 
@@ -11,6 +11,8 @@ namespace ProductCatalog.Infrastructure.Repositories
         {
             _mongoClient = mongoClient;
         }
+
+        public IClientSessionHandle? CurrentSession { get; private set; }
 
         public async Task<IClientSessionHandle> BeginTransactionAsync(
             CancellationToken cancellationToken = default)
@@ -20,6 +22,8 @@ namespace ProductCatalog.Infrastructure.Repositories
 
             session.StartTransaction();
 
+            CurrentSession = session;
+
             return session;
         }
 
@@ -27,20 +31,33 @@ namespace ProductCatalog.Infrastructure.Repositories
             IClientSessionHandle session,
             CancellationToken cancellationToken = default)
         {
-            await session.CommitTransactionAsync(cancellationToken);
-            session.Dispose();
+            try
+            {
+                await session.CommitTransactionAsync(cancellationToken);
+            }
+            finally
+            {
+                CurrentSession = null;
+                session.Dispose();
+            }
         }
 
         public async Task AbortAsync(
             IClientSessionHandle session,
             CancellationToken cancellationToken = default)
         {
-            if (session.IsInTransaction)
+            try
             {
-                await session.AbortTransactionAsync(cancellationToken);
+                if (session.IsInTransaction)
+                {
+                    await session.AbortTransactionAsync(cancellationToken);
+                }
             }
-
-            session.Dispose();
+            finally
+            {
+                CurrentSession = null;
+                session.Dispose();
+            }
         }
     }
 }
