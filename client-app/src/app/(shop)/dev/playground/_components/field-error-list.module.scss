@@ -1,0 +1,11 @@
+.list {
+  display: grid;
+  gap: var(--space-1);
+  padding-left: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+}
+
+.field {
+  font-family: var(--font-geist-mono), monospace;
+}

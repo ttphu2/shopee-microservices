@@ -1,0 +1,46 @@
+@use "mixins";
+
+.field {
+  display: flex;
+  height: var(--header-control-height);
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+
+  &:focus-within {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 0;
+  }
+}
+
+.label {
+  @include mixins.visually-hidden;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding-inline: var(--space-3);
+  border: 0;
+  color: var(--color-text);
+  background: transparent;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.button {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  border: 0;
+  color: var(--color-on-accent);
+  background-color: var(--color-accent);
+
+  &:hover {
+    background-color: var(--color-accent-hover);
+  }
+
+  @include mixins.focus-ring(-2px);
+}

@@ -1,0 +1,69 @@
+// Design tokens exposed as CSS custom properties.
+// Emitted once by app/globals.scss — component modules read the variables
+// (var(--color-…)) and must not @use this file, or :root would be duplicated.
+
+:root {
+  // Brand chrome
+  --color-header-bg: #151b26;
+  --color-nav-bg: #222c3a;
+  --color-on-dark: #fff;
+  --color-on-dark-muted: #c9d0d8;
+  --color-on-dark-hover: rgb(255 255 255 / 12%);
+
+  // Accent (calls to action, search button, cart badge)
+  --color-accent: #f5a524;
+  --color-accent-hover: #e3920f;
+  --color-on-accent: #111418;
+
+  // Neutrals
+  --color-page-bg: #eceff1;
+  --color-surface: #fff;
+  --color-text: #111418;
+  --color-text-muted: #5b6168;
+  --color-border: #d6dbe0;
+  --color-placeholder: #e4e8eb;
+  --color-link: #0b7285;
+  --color-focus: #2ea8c4;
+
+  // Feedback
+  --color-danger: #b42318;
+  --color-danger-surface: #fef3f2;
+  --color-info: #0b7285;
+
+  // Overlays
+  --color-scrim: rgb(17 20 24 / 35%);
+  --color-spinner-track: rgb(255 255 255 / 85%);
+
+  // Typography
+  --font-family-base: var(--font-geist-sans), system-ui, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.75rem;
+  --line-height-base: 1.5;
+
+  // Spacing scale (4px base)
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+
+  // Shape & elevation
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-full: 999px;
+  --shadow-card: 0 1px 2px rgb(15 17 17 / 8%), 0 2px 8px rgb(15 17 17 / 6%);
+  --shadow-overlay: 0 4px 12px rgb(15 17 17 / 15%), 0 12px 32px rgb(15 17 17 / 12%);
+
+  // Stacking: app-wide overlays sit above all page content.
+  --z-index-toast: 1000;
+  --z-index-overlay: 1100;
+
+  // Layout
+  --container-max-width: 90rem;
+  --header-control-height: 2.5rem;
+}

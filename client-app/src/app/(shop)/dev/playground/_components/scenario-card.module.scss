@@ -1,0 +1,35 @@
+.card {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.title {
+  font-size: var(--font-size-md);
+}
+
+.expected {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.expectedLabel {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.controls {
+  display: grid;
+  gap: var(--space-2);
+  align-content: end;
+  justify-items: start;
+}
+
+.result {
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+}

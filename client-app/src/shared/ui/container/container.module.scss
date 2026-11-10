@@ -1,0 +1,16 @@
+@use "breakpoints" as bp;
+
+.container {
+  width: 100%;
+  max-width: var(--container-max-width);
+  margin-inline: auto;
+  padding-inline: var(--space-4);
+
+  @include bp.up(sm) {
+    padding-inline: var(--space-6);
+  }
+
+  @include bp.up(lg) {
+    padding-inline: var(--space-8);
+  }
+}

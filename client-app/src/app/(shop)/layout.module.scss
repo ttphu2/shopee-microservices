@@ -1,0 +1,36 @@
+@use "breakpoints" as bp;
+@use "mixins";
+
+// Sticky-footer column: <main> grows so the footer stays at the bottom.
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.main {
+  flex: 1;
+  padding-block: var(--space-6) var(--space-12);
+
+  @include bp.up(md) {
+    padding-block-start: var(--space-8);
+  }
+}
+
+.skipLink {
+  @include mixins.visually-hidden;
+
+  &:focus {
+    top: var(--space-2);
+    left: var(--space-2);
+    z-index: 10;
+    width: auto;
+    height: auto;
+    padding: var(--space-2) var(--space-4);
+    margin: 0;
+    clip-path: none;
+    border-radius: var(--radius-sm);
+    color: var(--color-on-accent);
+    background-color: var(--color-accent);
+  }
+}

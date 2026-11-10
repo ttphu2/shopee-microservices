@@ -1,0 +1,67 @@
+@use "breakpoints" as bp;
+@use "mixins";
+
+.header {
+  color: var(--color-on-dark);
+  background-color: var(--color-header-bg);
+}
+
+// Mobile: brand + actions on the first row, full-width search below.
+// md+: a single row with the search filling the middle.
+.bar {
+  display: grid;
+  grid-template-areas:
+    "brand actions"
+    "search search";
+  grid-template-columns: auto 1fr;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  padding-block: var(--space-2);
+
+  @include bp.up(md) {
+    grid-template-areas: "brand search actions";
+    grid-template-columns: auto 1fr auto;
+    gap: var(--space-6);
+  }
+}
+
+.brand {
+  @include mixins.dark-bar-item;
+
+  grid-area: brand;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.search {
+  grid-area: search;
+}
+
+.actions {
+  display: flex;
+  grid-area: actions;
+  gap: var(--space-2);
+  align-items: center;
+  justify-self: end;
+}
+
+.account {
+  @include mixins.dark-bar-item;
+
+  flex-direction: column;
+  align-items: flex-start;
+  padding: var(--space-1) var(--space-2);
+  line-height: 1.2;
+}
+
+.accountGreeting {
+  font-size: var(--font-size-xs);
+  color: var(--color-on-dark-muted);
+}
+
+.accountLabel {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
