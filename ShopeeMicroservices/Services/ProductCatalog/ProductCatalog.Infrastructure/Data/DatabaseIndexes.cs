@@ -25,11 +25,12 @@ namespace ProductCatalog.Infrastructure.Data
                     Builders<ProductSku>.IndexKeys.Ascending(sku => sku.SpuId)),
                 cancellationToken: cancellationToken);
 
-            // Backs the SKU code conflict check in the create and update handlers (GetSkusByCodesAsync).
-            // Not unique yet: existing databases may already contain duplicate codes, which must be cleaned up first.
+            // SKU codes are unique across all products. The create and update handlers check this first to return a
+            // descriptive error; the index guarantees it when concurrent requests pass that check at the same time.
             await skus.Indexes.CreateOneAsync(
                 new CreateIndexModel<ProductSku>(
-                    Builders<ProductSku>.IndexKeys.Ascending(sku => sku.SkuCode)),
+                    Builders<ProductSku>.IndexKeys.Ascending(sku => sku.SkuCode),
+                    new CreateIndexOptions { Unique = true }),
                 cancellationToken: cancellationToken);
         }
     }

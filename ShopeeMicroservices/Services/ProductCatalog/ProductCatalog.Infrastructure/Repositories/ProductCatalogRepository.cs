@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using ProductCatalog.Domain.Entities;
@@ -124,20 +124,6 @@ namespace ProductCatalog.Infrastructure.Repositories
         public async Task<ProductType?> GetCategoryByIdAsync(string typeId, CancellationToken cancellationToken = default)
         {
             return await Find(_types, t => t.Id == typeId).FirstOrDefaultAsync(cancellationToken);
-        }
-
-        public async Task<ProductBrand?> GetBrandByNameAsync(string name, CancellationToken cancellationToken = default)
-        {
-            return await _brands
-                .Find(x => x.Name == name)
-                .FirstOrDefaultAsync();
-        }
-
-        public async Task<ProductType?> GetCategoryByNameAsync(string name, CancellationToken cancellationToken = default)
-        {
-            return await _types
-                .Find(x => x.Name == name)
-                .FirstOrDefaultAsync();
         }
 
         // Reads join the active transaction when there is one (commands) and run without a session otherwise (queries).

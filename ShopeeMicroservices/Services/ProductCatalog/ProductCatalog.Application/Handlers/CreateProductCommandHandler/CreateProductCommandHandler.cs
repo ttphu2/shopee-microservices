@@ -1,4 +1,4 @@
-﻿using Infrastructure.Abstractions.Messaging;
+using Infrastructure.Abstractions.Messaging;
 using ProductCatalog.Application.Errors;
 using ProductCatalog.Application.Handlers.Base;
 using ProductCatalog.Domain.Abstractions;
@@ -20,12 +20,12 @@ namespace ProductCatalog.Application.Handlers.CreateProductCommandHandler
         {
             if (await _productCatalogRepository.GetBrandByIdAsync(request.BrandId, cancellationToken) is null)
             {
-                return Result.Failure<CreateProductResult>(ProductErrors.BrandNotFound);
+                return ProductErrors.BrandNotFound;
             }
 
             if (await _productCatalogRepository.GetCategoryByIdAsync(request.CategoryId, cancellationToken) is null)
             {
-                return Result.Failure<CreateProductResult>(ProductErrors.CategoryNotFound);
+                return ProductErrors.CategoryNotFound;
             }
 
             var requestedSkuCodes = request.Skus.Select(sku => sku.SkuCode).ToList();
@@ -36,7 +36,7 @@ namespace ProductCatalog.Application.Handlers.CreateProductCommandHandler
 
             if (conflictingSkuCodes.Count > 0)
             {
-                return Result.Failure<CreateProductResult>(ProductErrors.SkuCodeConflict(conflictingSkuCodes));
+                return ProductErrors.SkuCodeConflict(conflictingSkuCodes);
             }
 
             var productSpu = ProductSpu.Create(

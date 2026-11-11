@@ -29,13 +29,11 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
-//Create indexes and seed Mongo db on startup
-using (var scope = app.Services.CreateScope())
-{
-    var options = scope.ServiceProvider.GetRequiredService<IOptions<DatabaseSettings>>();
-    await DatabaseIndexes.EnsureAsync(scope.ServiceProvider.GetRequiredService<IMongoClient>(), options);
-    await DatabaseSeeder.SeedAsync(options);
-}
+// Create indexes and seed the database on startup.
+var mongoClient = app.Services.GetRequiredService<IMongoClient>();
+var databaseSettings = app.Services.GetRequiredService<IOptions<DatabaseSettings>>();
+await DatabaseIndexes.EnsureAsync(mongoClient, databaseSettings);
+await DatabaseSeeder.SeedAsync(mongoClient, databaseSettings);
 
 if (app.Environment.IsDevelopment())
 {

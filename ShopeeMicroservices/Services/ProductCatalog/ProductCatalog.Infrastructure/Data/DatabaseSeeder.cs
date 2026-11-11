@@ -2,215 +2,53 @@
 using MongoDB.Driver;
 using ProductCatalog.Domain.Entities;
 using ProductCatalog.Infrastructure.Settings;
-using System.Text.Json;
 
 namespace ProductCatalog.Infrastructure.Data
 {
+    // Inserts CatalogSeedData into each collection that is still empty, so restarts never duplicate or overwrite data.
     public static class DatabaseSeeder
     {
-        private static readonly JsonSerializerOptions JsonOptions = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
-
         public static async Task SeedAsync(
-            IOptions<DatabaseSettings> options)
+            IMongoClient client,
+            IOptions<DatabaseSettings> options,
+            CancellationToken cancellationToken = default)
         {
             var settings = options.Value;
+            var database = client.GetDatabase(settings.DatabaseName);
 
-            var client = new MongoClient(
-                settings.ConnectionString);
+            var brands = database.GetCollection<ProductBrand>(settings.BrandCollectionName);
+            var types = database.GetCollection<ProductType>(settings.TypeCollectionName);
+            var products = database.GetCollection<ProductSpu>(settings.ProductSpuCollectionName);
+            var skus = database.GetCollection<ProductSku>(settings.ProductSkusCollectionName);
 
-            var db = client.GetDatabase(
-                settings.DatabaseName);
-
-            var brands = db.GetCollection<ProductBrand>(
-                settings.BrandCollectionName);
-
-            var types = db.GetCollection<ProductType>(
-                settings.TypeCollectionName);
-
-            var products = db.GetCollection<ProductSpu>(
-                settings.ProductSpuCollectionName);
-
-            var skus = db.GetCollection<ProductSku>(
-                settings.ProductSkusCollectionName);
-
-            var assemblyPath = Path.GetDirectoryName(typeof(DatabaseSeeder).Assembly.Location)!;
-            var seedBasePath = Path.Combine(assemblyPath, "Data", "SeedData");
-
-            await SeedBrandsAsync(
-                brands,
-                seedBasePath);
-
-            await SeedTypesAsync(
-                types,
-                seedBasePath);
-
-            await SeedProductsAsync(
-                products,
-                skus,
-                brands,
-                types,
-                seedBasePath);
-        }
-
-        private static async Task SeedBrandsAsync(
-            IMongoCollection<ProductBrand> brands,
-            string seedBasePath)
-        {
-            if (await brands.CountDocumentsAsync(_ => true) > 0)
+            if (await IsEmptyAsync(brands, cancellationToken))
             {
-                return;
+                await brands.InsertManyAsync(CatalogSeedData.CreateBrands(), cancellationToken: cancellationToken);
             }
 
-            var path = Path.Combine(
-                seedBasePath,
-                "brands.json");
-
-            var data = await File.ReadAllTextAsync(path);
-
-            var brandList =
-                JsonSerializer.Deserialize<List<ProductBrand>>(
-                    data,
-                    JsonOptions) ?? [];
-
-            var now = DateTime.UtcNow;
-
-            foreach (var brand in brandList)
+            if (await IsEmptyAsync(types, cancellationToken))
             {
-                brand.Id = Guid.CreateVersion7().ToString();
-
-                if (brand.CreatedDate == default)
-                {
-                    brand.CreatedDate = now;
-                }
+                await types.InsertManyAsync(CatalogSeedData.CreateTypes(), cancellationToken: cancellationToken);
             }
 
-            if (brandList.Count > 0)
+            if (await IsEmptyAsync(products, cancellationToken))
             {
-                await brands.InsertManyAsync(brandList);
-            }
-        }
+                var (seedProducts, seedSkus) = CatalogSeedData.CreateProducts();
 
-        private static async Task SeedTypesAsync(
-            IMongoCollection<ProductType> types,
-            string seedBasePath)
-        {
-            if (await types.CountDocumentsAsync(_ => true) > 0)
-            {
-                return;
-            }
-
-            var path = Path.Combine(
-                seedBasePath,
-                "types.json");
-
-            var data = await File.ReadAllTextAsync(path);
-
-            var typeList =
-                JsonSerializer.Deserialize<List<ProductType>>(
-                    data,
-                    JsonOptions) ?? [];
-
-            var now = DateTime.UtcNow;
-
-            foreach (var type in typeList)
-            {
-                type.Id = Guid.CreateVersion7().ToString();
-
-                if (type.CreatedDate == default)
-                {
-                    type.CreatedDate = now;
-                }
-            }
-
-            if (typeList.Count > 0)
-            {
-                await types.InsertManyAsync(typeList);
-            }
-        }
-
-        private static async Task SeedProductsAsync(
-            IMongoCollection<ProductSpu> products,
-            IMongoCollection<ProductSku> skus,
-            IMongoCollection<ProductBrand> brands,
-            IMongoCollection<ProductType> types,
-            string seedBasePath)
-        {
-            if (await products.CountDocumentsAsync(_ => true) > 0)
-            {
-                return;
-            }
-
-            var brand = await brands
-                .Find(_ => true)
-                .FirstOrDefaultAsync();
-
-            var type = await types
-                .Find(_ => true)
-                .FirstOrDefaultAsync();
-
-            var path = Path.Combine(
-                seedBasePath,
-                "products.json");
-
-            var data = await File.ReadAllTextAsync(path);
-
-            var seedList =
-                JsonSerializer.Deserialize<List<ProductSeed>>(
-                    data,
-                    JsonOptions) ?? [];
-
-            if (seedList.Count == 0)
-            {
-                return;
-            }
-
-            var now = DateTime.UtcNow;
-
-            var productList = new List<ProductSpu>();
-            var skuList = new List<ProductSku>();
-
-            foreach (var item in seedList)
-            {
-                var spuId = Guid.CreateVersion7().ToString();
-
-                var productSpu = new ProductSpu
-                {
-                    Id = spuId,
-                    ProductCode = item.ProductCode,
-                    Name = item.Name,
-                    Description = item.Description,
-                    BrandId = brand.Id,
-                    CategoryId = type.Id,
-                    Images = item.Images,
-                    VariantOptions = item.VariantOptions,
-                    CreatedDate = now
-                };
-
-                productList.Add(productSpu);
-
-                foreach (var sku in item.Skus)
-                {
-                    sku.Id = Guid.CreateVersion7().ToString();
-                    sku.SpuId = spuId;
-
-                    if (sku.CreatedDate == default)
+                // Products and their SKUs are inserted together, so a failure never leaves products without SKUs.
+                using var session = await client.StartSessionAsync(cancellationToken: cancellationToken);
+                await session.WithTransactionAsync(
+                    async (transaction, token) =>
                     {
-                        sku.CreatedDate = now;
-                    }
-
-                    skuList.Add(sku);
-                }
-            }
-
-            await products.InsertManyAsync(productList);
-
-            if (skuList.Count > 0)
-            {
-                await skus.InsertManyAsync(skuList);
+                        await products.InsertManyAsync(transaction, seedProducts, cancellationToken: token);
+                        await skus.InsertManyAsync(transaction, seedSkus, cancellationToken: token);
+                        return true;
+                    },
+                    cancellationToken: cancellationToken);
             }
         }
+
+        private static async Task<bool> IsEmptyAsync<T>(IMongoCollection<T> collection, CancellationToken cancellationToken) =>
+            !await collection.Find(FilterDefinition<T>.Empty).AnyAsync(cancellationToken);
     }
 }

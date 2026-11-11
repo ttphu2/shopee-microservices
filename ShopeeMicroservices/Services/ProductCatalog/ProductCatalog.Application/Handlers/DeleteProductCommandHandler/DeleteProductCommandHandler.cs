@@ -21,7 +21,7 @@ namespace ProductCatalog.Application.Handlers.DeleteProductCommandHandler
 
             if (product is null)
             {
-                return Result.Failure(Error.NotFound);
+                return Error.NotFound;
             }
 
             await _productCatalogRepository.DeleteSkusByProductIdAsync(product.Id, cancellationToken);

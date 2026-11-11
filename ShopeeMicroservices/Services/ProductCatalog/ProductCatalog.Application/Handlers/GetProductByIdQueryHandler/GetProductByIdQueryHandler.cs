@@ -1,4 +1,4 @@
-﻿using Infrastructure.Abstractions.Messaging;
+using Infrastructure.Abstractions.Messaging;
 using ProductCatalog.Application.DTOs;
 using ProductCatalog.Application.Mappers;
 using ProductCatalog.Domain.Repositories;
@@ -14,7 +14,7 @@ namespace ProductCatalog.Application.Handlers.GetProductByIdQueryHandler
 
             if (product is null)
             {
-                return Result.Failure<ProductDetailsDto>(Error.NotFound);
+                return Error.NotFound;
             }
 
             // Independent reads keyed off the product; no session is involved, so running them concurrently is safe.

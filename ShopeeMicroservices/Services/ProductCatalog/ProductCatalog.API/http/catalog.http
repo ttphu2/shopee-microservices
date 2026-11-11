@@ -1,11 +1,18 @@
+# Docker Compose: http://localhost:8000 · dotnet run: http://localhost:5000
 @baseUrl = http://localhost:8000
-# Brand and category ids are generated when the database is seeded; replace them with ids from your database.
-@brandId = 01a0b787-1838-7060-a3ea-f20d5d79f61a
-@categoryId = 01a0b787-18d1-73a9-a140-791dbb5fd1a8
-# Id of an existing product, e.g. from GET {{baseUrl}}/api/Product
-@productId = replace-with-product-id
+# Fixed ids from ProductCatalog.Infrastructure/Data/CatalogSeedData.cs (present in every freshly seeded database).
+@appleBrandId = 019a7e00-0000-7000-8000-000000000101
+@smartphoneTypeId = 019a7e00-0000-7000-8000-000000000201
+# iPhone X
+@productId = 019a7e00-0000-7000-8000-000000000301
 
-### Create product
+### List products
+GET {{baseUrl}}/api/Product
+
+### Get product with brand, type, SKUs and price range
+GET {{baseUrl}}/api/Product/{{productId}}
+
+### Create product (200)
 POST {{baseUrl}}/api/Product
 Content-Type: application/json
 
@@ -13,102 +20,76 @@ Content-Type: application/json
   "productCode": "IPHONE-DUO",
   "name": "iPhone Duo",
   "description": "Latest iPhone",
-  "brandId": "{{brandId}}",
-  "categoryId": "{{categoryId}}",
+  "brandId": "{{appleBrandId}}",
+  "categoryId": "{{smartphoneTypeId}}",
   "images": [
-    "https://example.com/iphone-duo.jpg"
+    "https://example.com/products/iphone-duo/front.jpg"
   ],
   "variantOptions": [
-    {
-      "name": "Color",
-      "code": "color",
-      "values": [
-        "Titanium Blue",
-        "Black"
-      ]
-    },
-    {
-      "name": "Storage",
-      "code": "storage",
-      "values": [
-        "128GB",
-        "256GB"
-      ]
-    }
+    { "name": "Color", "code": "color", "values": [ "Titanium Blue", "Black" ] },
+    { "name": "Storage", "code": "storage", "values": [ "128GB", "256GB" ] }
   ],
   "skus": [
     {
-      "skuCode": "IPHONE-DUO-256",
+      "skuCode": "IPHONE-DUO-BK-256",
       "price": 999.99,
-      "imageUrl": "https://example.com/iphone-17-black.jpg",
-      "attributes": [
-        {
-          "attributeCode": "color",
-          "value": "Black"
-        },
-        {
-          "attributeCode": "storage",
-          "value": "256GB"
-        }
-      ]
-    }
-  ]
-}
-
-### Get product
-GET {{baseUrl}}/api/Product/{{productId}}
-
-### Update product (replaces the body and the SKU set; SKUs are matched by skuCode, productCode cannot change)
-PUT {{baseUrl}}/api/Product/{{productId}}
-Content-Type: application/json
-
-{
-  "name": "iPhone Duo",
-  "description": "Latest iPhone, now in blue",
-  "brandId": "{{brandId}}",
-  "categoryId": "{{categoryId}}",
-  "images": [
-    "https://example.com/iphone-duo.jpg"
-  ],
-  "variantOptions": [
-    {
-      "name": "Color",
-      "code": "color",
-      "values": [
-        "Titanium Blue",
-        "Black"
-      ]
-    },
-    {
-      "name": "Storage",
-      "code": "storage",
-      "values": [
-        "128GB",
-        "256GB"
-      ]
-    }
-  ],
-  "skus": [
-    {
-      "skuCode": "IPHONE-DUO-256",
-      "price": 949.99,
-      "imageUrl": "https://example.com/iphone-17-black.jpg",
+      "imageUrl": "https://example.com/products/iphone-duo/black.jpg",
       "attributes": [
         { "attributeCode": "color", "value": "Black" },
         { "attributeCode": "storage", "value": "256GB" }
       ]
+    }
+  ]
+}
+
+### Update product (204). Replaces the body and the SKU set: SKUs are matched by skuCode, so this changes the price
+### of IPHONE-X-SG-64, keeps IPHONE-X-SG-256 and IPHONE-X-SL-64, and deletes IPHONE-X-SL-256. productCode cannot change.
+PUT {{baseUrl}}/api/Product/{{productId}}
+Content-Type: application/json
+
+{
+  "name": "iPhone X",
+  "description": "Apple iPhone X, now cheaper",
+  "brandId": "{{appleBrandId}}",
+  "categoryId": "{{smartphoneTypeId}}",
+  "images": [
+    "https://example.com/products/iphone-x/front.jpg",
+    "https://example.com/products/iphone-x/back.jpg"
+  ],
+  "variantOptions": [
+    { "name": "Color", "code": "color", "values": [ "Space Gray", "Silver" ] },
+    { "name": "Storage", "code": "storage", "values": [ "64GB", "256GB" ] }
+  ],
+  "skus": [
+    {
+      "skuCode": "IPHONE-X-SG-64",
+      "price": 749.00,
+      "imageUrl": "https://example.com/products/iphone-x/space-gray.jpg",
+      "attributes": [
+        { "attributeCode": "color", "value": "Space Gray" },
+        { "attributeCode": "storage", "value": "64GB" }
+      ]
     },
     {
-      "skuCode": "IPHONE-DUO-BLUE-128",
-      "price": 899.99,
-      "imageUrl": "https://example.com/iphone-17-blue.jpg",
+      "skuCode": "IPHONE-X-SG-256",
+      "price": 899.00,
+      "imageUrl": "https://example.com/products/iphone-x/space-gray.jpg",
       "attributes": [
-        { "attributeCode": "color", "value": "Titanium Blue" },
-        { "attributeCode": "storage", "value": "128GB" }
+        { "attributeCode": "color", "value": "Space Gray" },
+        { "attributeCode": "storage", "value": "256GB" }
+      ]
+    },
+    {
+      "skuCode": "IPHONE-X-SL-64",
+      "price": 799.00,
+      "imageUrl": "https://example.com/products/iphone-x/silver.jpg",
+      "attributes": [
+        { "attributeCode": "color", "value": "Silver" },
+        { "attributeCode": "storage", "value": "64GB" }
       ]
     }
   ]
 }
 
-### Delete product (and all of its SKUs)
+### Delete product and all of its SKUs (204)
 DELETE {{baseUrl}}/api/Product/{{productId}}

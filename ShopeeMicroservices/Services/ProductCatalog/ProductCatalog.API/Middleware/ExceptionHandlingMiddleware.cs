@@ -1,4 +1,5 @@
-﻿using Infrastructure.Exceptions;
+﻿using System.Net.Mime;
+using Infrastructure.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ProductCatalog.Api.Middleware;
@@ -43,7 +44,10 @@ public class ExceptionHandlingMiddleware
 
             context.Response.StatusCode = exceptionDetails.Status;
 
-            await context.Response.WriteAsJsonAsync(problemDetails);
+            await context.Response.WriteAsJsonAsync(
+                problemDetails,
+                options: null,
+                contentType: MediaTypeNames.Application.ProblemJson);
         }
     }
 

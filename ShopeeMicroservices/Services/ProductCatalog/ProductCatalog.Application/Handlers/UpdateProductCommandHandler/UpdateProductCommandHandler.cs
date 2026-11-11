@@ -28,17 +28,17 @@ namespace ProductCatalog.Application.Handlers.UpdateProductCommandHandler
 
             if (product is null)
             {
-                return Result.Failure(Error.NotFound);
+                return Error.NotFound;
             }
 
             if (await _productCatalogRepository.GetBrandByIdAsync(request.BrandId, cancellationToken) is null)
             {
-                return Result.Failure(ProductErrors.BrandNotFound);
+                return ProductErrors.BrandNotFound;
             }
 
             if (await _productCatalogRepository.GetCategoryByIdAsync(request.CategoryId, cancellationToken) is null)
             {
-                return Result.Failure(ProductErrors.CategoryNotFound);
+                return ProductErrors.CategoryNotFound;
             }
 
             var requestedSkuCodes = request.Skus.Select(sku => sku.SkuCode).ToList();
@@ -50,7 +50,7 @@ namespace ProductCatalog.Application.Handlers.UpdateProductCommandHandler
 
             if (conflictingSkuCodes.Count > 0)
             {
-                return Result.Failure(ProductErrors.SkuCodeConflict(conflictingSkuCodes));
+                return ProductErrors.SkuCodeConflict(conflictingSkuCodes);
             }
 
             var modifiedAt = _dateTimeProvider.UtcNow;

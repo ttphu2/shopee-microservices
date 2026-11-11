@@ -17,7 +17,5 @@ namespace ProductCatalog.Domain.Repositories
         Task DeleteSkusByProductIdAsync(string productId, CancellationToken cancellationToken = default);
         Task<ProductBrand?> GetBrandByIdAsync(string brandId, CancellationToken cancellationToken = default);
         Task<ProductType?> GetCategoryByIdAsync(string typeId, CancellationToken cancellationToken = default);
-        Task<ProductBrand?> GetBrandByNameAsync(string name, CancellationToken cancellationToken = default);
-        Task<ProductType?> GetCategoryByNameAsync(string name, CancellationToken cancellationToken = default);
     }
 }
