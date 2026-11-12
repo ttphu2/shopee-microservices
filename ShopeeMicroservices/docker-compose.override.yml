@@ -7,9 +7,19 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    # Transactions need replica set rs0. The first check initiates it (later checks skip that);
+    # the container is healthy once this node is the writable primary.
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "try { rs.status() } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'catalogdb:27017' }] }) } if (!db.hello().isWritablePrimary) quit(1)"]
+      interval: 5s
+      timeout: 10s
+      retries: 12
+      start_period: 10s
   productcatalog.api:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
       - "DatabaseSettings__ConnectionString=mongodb://catalogdb:27017/?replicaSet=rs0"
       - "DatabaseSettings__DatabaseName=CatalogDb"
       - "DatabaseSettings__ProductSpuCollectionName=ProductSpu"
@@ -17,9 +27,11 @@ services:
       - "DatabaseSettings__BrandCollectionName=Brands"
       - "DatabaseSettings__TypeCollectionName=Types"
     depends_on:
-      - catalogdb
+      catalogdb:
+        condition: service_healthy
     ports:
-      - "8000:8080"
+      - "6000:8080"
+      - "6060:8081"
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro

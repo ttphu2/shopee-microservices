@@ -1,3 +1,5 @@
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
@@ -29,11 +31,11 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
-// Create indexes and seed the database on startup.
-var mongoClient = app.Services.GetRequiredService<IMongoClient>();
-var databaseSettings = app.Services.GetRequiredService<IOptions<DatabaseSettings>>();
-await DatabaseIndexes.EnsureAsync(mongoClient, databaseSettings);
-await DatabaseSeeder.SeedAsync(mongoClient, databaseSettings);
+// Seed the database and create its indexes, only if the database does not exist yet.
+await DatabaseInitializer.InitializeAsync(
+    app.Services.GetRequiredService<IMongoClient>(),
+    app.Services.GetRequiredService<IOptions<DatabaseSettings>>(),
+    app.Logger);
 
 if (app.Environment.IsDevelopment())
 {
@@ -57,5 +59,10 @@ app.UseCustomExceptionHandler();
 //app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
 
 app.Run();

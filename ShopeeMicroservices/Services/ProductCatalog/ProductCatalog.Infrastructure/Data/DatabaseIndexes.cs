@@ -5,7 +5,8 @@ using ProductCatalog.Infrastructure.Settings;
 
 namespace ProductCatalog.Infrastructure.Data
 {
-    public static class DatabaseIndexes
+    // Called only by DatabaseInitializer.
+    internal static class DatabaseIndexes
     {
         // Idempotent: MongoDB ignores a CreateIndex call for an identical existing index.
         public static async Task EnsureAsync(

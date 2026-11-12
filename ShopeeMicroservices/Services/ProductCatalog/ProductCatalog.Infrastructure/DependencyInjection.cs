@@ -38,5 +38,12 @@ public static class DependencyInjection
         services.AddScoped<IMongoSessionAccessor>(sp => sp.GetRequiredService<MongoUnitOfWork>());
 
         services.AddScoped<IProductCatalogRepository, ProductCatalogRepository>();
+
+        // Reported by the /health endpoint; reuses the app's MongoClient and database.
+        services.AddHealthChecks()
+            .AddMongoDb(
+                sp => sp.GetRequiredService<IMongoClient>(),
+                sp => sp.GetRequiredService<IOptions<DatabaseSettings>>().Value.DatabaseName,
+                name: "mongodb");
     }
 }
