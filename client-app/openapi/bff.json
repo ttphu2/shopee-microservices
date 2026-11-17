@@ -1,11 +1,48 @@
 {
   "openapi": "3.0.4",
   "info": {
-    "title": "ProductCatalog API",
-    "version": "v1"
+    "title": "ProductCatalog.API, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null",
+    "version": "1.0"
   },
   "paths": {
     "/api/Product": {
+      "get": {
+        "tags": [
+          "Product"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetProductsQueryResultValidation"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetProductsQueryResultValidation"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetProductsQueryResultValidation"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "Product"
@@ -33,19 +70,19 @@
           "200": {
             "description": "OK",
             "content": {
-              "application/json": {
+              "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateProductResult"
+                  "$ref": "#/components/schemas/CreateProductResultValidation"
                 }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
+              },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/CreateProductResultValidation"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateProductResultValidation"
                 }
               }
             }
@@ -53,7 +90,169 @@
           "500": {
             "description": "Internal Server Error",
             "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Product/{id}": {
+      "get": {
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDetailsDtoValidation"
+                }
+              },
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDetailsDtoValidation"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDetailsDtoValidation"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationOutcome"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationOutcome"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationOutcome"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationOutcome"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationOutcome"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationOutcome"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -77,37 +276,45 @@
         "type": "object",
         "properties": {
           "productCode": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "brandId": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "categoryId": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "images": {
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "nullable": true
           },
           "variantOptions": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/VariantOption"
-            }
+            },
+            "nullable": true
           },
           "skus": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/CreateProductSkuRequest"
-            }
+              "$ref": "#/components/schemas/ProductSkuRequest"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -116,25 +323,47 @@
         "type": "object",
         "additionalProperties": false
       },
-      "CreateProductSkuRequest": {
+      "CreateProductResultValidation": {
         "type": "object",
         "properties": {
-          "skuCode": {
-            "type": "string"
+          "isSuccessful": {
+            "type": "boolean",
+            "readOnly": true
           },
-          "price": {
-            "type": "number",
-            "format": "double"
+          "validationMessages": {
+            "$ref": "#/components/schemas/ValidationMessages"
           },
-          "imageUrl": {
-            "type": "string",
-            "nullable": true
-          },
-          "attributes": {
+          "value": {
+            "$ref": "#/components/schemas/CreateProductResult"
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetProductsQueryResult": {
+        "type": "object",
+        "properties": {
+          "products": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/SkuAttribute"
-            }
+              "$ref": "#/components/schemas/ProductSpuDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetProductsQueryResultValidation": {
+        "type": "object",
+        "properties": {
+          "isSuccessful": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "validationMessages": {
+            "$ref": "#/components/schemas/ValidationMessages"
+          },
+          "value": {
+            "$ref": "#/components/schemas/GetProductsQueryResult"
           }
         },
         "additionalProperties": false
@@ -166,14 +395,320 @@
         },
         "additionalProperties": { }
       },
+      "ProductBrandDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProductDetailsDto": {
+        "type": "object",
+        "properties": {
+          "product": {
+            "$ref": "#/components/schemas/ProductSpuDto"
+          },
+          "brand": {
+            "$ref": "#/components/schemas/ProductBrandDto"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ProductTypeDto"
+          },
+          "skus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductSkuDto"
+            },
+            "nullable": true
+          },
+          "minPrice": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "maxPrice": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProductDetailsDtoValidation": {
+        "type": "object",
+        "properties": {
+          "isSuccessful": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "validationMessages": {
+            "$ref": "#/components/schemas/ValidationMessages"
+          },
+          "value": {
+            "$ref": "#/components/schemas/ProductDetailsDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProductSkuDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "spuId": {
+            "type": "string",
+            "nullable": true
+          },
+          "skuCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkuAttributeDto"
+            },
+            "nullable": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastModified": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastModifiedBy": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProductSkuRequest": {
+        "type": "object",
+        "properties": {
+          "skuCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkuAttribute"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProductSpuDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "productCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "brandId": {
+            "type": "string",
+            "nullable": true
+          },
+          "categoryId": {
+            "type": "string",
+            "nullable": true
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "variantOptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariantOptionDto"
+            },
+            "nullable": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastModified": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastModifiedBy": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProductTypeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "SkuAttribute": {
         "type": "object",
         "properties": {
           "attributeCode": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "value": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SkuAttributeDto": {
+        "type": "object",
+        "properties": {
+          "attributeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "value": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateProductRequest": {
+        "required": [
+          "brandId",
+          "categoryId",
+          "description",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "brandId": {
+            "type": "string",
+            "nullable": true
+          },
+          "categoryId": {
+            "type": "string",
+            "nullable": true
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "variantOptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariantOption"
+            },
+            "nullable": true
+          },
+          "skus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductSkuRequest"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ValidationMessages": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ValidationOutcome": {
+        "type": "object",
+        "properties": {
+          "isSuccessful": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "validationMessages": {
+            "$ref": "#/components/schemas/ValidationMessages"
           }
         },
         "additionalProperties": false
@@ -182,16 +717,40 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "code": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "values": {
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VariantOptionDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false

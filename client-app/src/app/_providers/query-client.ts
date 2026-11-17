@@ -1,6 +1,6 @@
 import { isServer, MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import { getUserFacingMessage, isApiError } from "@/shared/api";
-import { captureException } from "@/shared/observability/capture-exception";
+import { captureException, type ErrorContext } from "@/shared/observability/capture-exception";
 import { toast } from "@/shared/ui/toast";
 
 const MAX_RETRIES = 2;
@@ -8,23 +8,22 @@ const MAX_RETRIES = 2;
 // Global error policy for client-side API calls, so features don't repeat it:
 // - Queries: the component shows initial-load errors inline (or via `throwOnError`);
 //   only a failed *background* refetch toasts, because stale data is still on screen.
-// - Mutations: toast unless the caller opts out (`meta.errorToast: false`) or the
-//   error carries field errors, which the form maps onto its inputs.
-// - 4xx responses are never retried; they won't succeed on a second attempt.
+// - Mutations: toast unless the caller opts out (`meta.errorToast: false`), e.g. a
+//   form that lists the backend's validation messages itself.
+// - Business errors and 4xx responses are never retried; they won't succeed on a
+//   second attempt.
 function makeQueryClient(): QueryClient {
   return new QueryClient({
     queryCache: new QueryCache({
       onError: (error, query) => {
-        captureException(error, { source: "query", queryKey: query.queryKey });
+        report(error, { source: "query", queryKey: query.queryKey });
         if (query.state.data === undefined) return;
         notify(error, query.meta?.errorToast);
       },
     }),
     mutationCache: new MutationCache({
       onError: (error, _variables, _onMutateResult, mutation) => {
-        // Validation failures are expected outcomes, not incidents: no report, no toast.
-        if (isApiError(error) && error.isValidation) return;
-        captureException(error, { source: "mutation", mutationKey: mutation.options.mutationKey });
+        report(error, { source: "mutation", mutationKey: mutation.options.mutationKey });
         notify(error, mutation.meta?.errorToast);
       },
     }),
@@ -37,10 +36,16 @@ function makeQueryClient(): QueryClient {
         // happen on explicit refresh or invalidation (e.g. after a mutation) instead.
         refetchOnWindowFocus: false,
         retry: (failureCount, error) =>
-          !(isApiError(error) && error.status < 500) && failureCount < MAX_RETRIES,
+          !(isApiError(error) && (error.isValidation || error.status < 500)) &&
+          failureCount < MAX_RETRIES,
       },
     },
   });
+}
+
+function report(error: unknown, context: ErrorContext): void {
+  if (isApiError(error) && error.isValidation) return;
+  captureException(error, context);
 }
 
 function notify(error: unknown, errorToast: string | false | undefined): void {

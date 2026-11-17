@@ -3,9 +3,9 @@
 import { useMutation, useQuery, type MutationMeta } from "@tanstack/react-query";
 import { getUserFacingMessage, isApiError } from "@/shared/api";
 import { Button } from "@/shared/ui/button";
-import { mockApiCall, mockTimeout, problems } from "../_lib/mock-api";
-import { FieldErrorList } from "./field-error-list";
+import { mockApiCall, mockTimeout, outcomes, problems, success } from "../_lib/mock-api";
 import { ScenarioCard, ScenarioResult } from "./scenario-card";
+import { ValidationMessageList } from "./validation-message-list";
 
 type MutationScenarioProps = {
   title: string;
@@ -30,21 +30,23 @@ function MutationScenario({ title, expected, mutationFn, meta = {} }: MutationSc
         {error !== null && meta.errorToast === false && ` · shown inline: ${getUserFacingMessage(error)}`}
         {mutation.isIdle && "Idle"}
       </ScenarioResult>
-      {isApiError(error) && error.fieldErrors !== undefined && (
-        <FieldErrorList fieldErrors={error.fieldErrors} />
+      {isApiError(error) && error.validationMessages !== undefined && meta.errorToast === false && (
+        <ValidationMessageList messages={error.validationMessages} />
       )}
     </ScenarioCard>
   );
 }
 
-function InitialLoadQuery({ failure, title, expected }: {
-  failure: (typeof problems)["notFound"] | (typeof problems)["unavailable"];
+function InitialLoadQuery({ id, status, body, title, expected }: {
+  id: string;
+  status?: number;
+  body: unknown;
   title: string;
   expected: string;
 }) {
   const query = useQuery({
-    queryKey: ["playground", "initial-load", failure.status],
-    queryFn: () => mockApiCall({ status: failure.status, body: failure }),
+    queryKey: ["playground", "initial-load", id],
+    queryFn: () => mockApiCall({ status, body }),
     enabled: false,
   });
 
@@ -69,7 +71,7 @@ function BackgroundRefetchFailure() {
     queryKey: ["playground", "background-refetch"],
     queryFn: () =>
       backgroundRefetchCalls++ === 0
-        ? mockApiCall<{ stock: number }>({ status: 200, body: { stock: 7 } })
+        ? mockApiCall<{ stock: number }>({ body: success({ stock: 7 }) })
         : mockApiCall<{ stock: number }>({ status: problems.serverError.status, body: problems.serverError }),
     enabled: false,
   });
@@ -107,9 +109,9 @@ export function ErrorScenarios() {
         mutationFn={() => mockTimeout()}
       />
       <MutationScenario
-        title="Mutation: client error (404)"
-        expected="Error toast showing the backend's message (4xx messages are safe to show)."
-        mutationFn={() => mockApiCall({ status: 404, body: problems.notFound })}
+        title="Mutation: malformed request (ASP.NET 400)"
+        expected="Error toast with the ProblemDetails title (4xx messages are safe to show); logged to the console."
+        mutationFn={() => mockApiCall({ status: 400, body: problems.modelValidation })}
       />
       <MutationScenario
         title="Mutation: custom toast title"
@@ -124,22 +126,31 @@ export function ErrorScenarios() {
         meta={{ errorToast: false }}
       />
       <MutationScenario
-        title="Validation error (backend middleware format)"
-        expected="No toast and nothing logged; field errors listed inline as a form would show them."
-        mutationFn={() => mockApiCall({ status: 400, body: problems.validationFailure })}
+        title="Business error (200, isSuccessful false)"
+        expected="Error toast showing the backend's validation messages; nothing logged."
+        mutationFn={() => mockApiCall({ body: outcomes.validationFailure })}
       />
       <MutationScenario
-        title="Validation error (ASP.NET model-validation format)"
-        expected="Same as above, parsed from the { Field: [messages] } shape."
-        mutationFn={() => mockApiCall({ status: 400, body: problems.modelValidation })}
+        title="Business error shown by the form"
+        expected="No toast and nothing logged; the messages are listed inline (errorToast: false)."
+        mutationFn={() => mockApiCall({ body: outcomes.validationFailure })}
+        meta={{ errorToast: false }}
+      />
+      <MutationScenario
+        title="Optimistic-locking conflict"
+        expected="Error toast asking to reload; nothing logged (it is a user message, not an incident)."
+        mutationFn={() => mockApiCall({ body: outcomes.optimisticLocking })}
       />
       <InitialLoadQuery
-        failure={problems.notFound}
-        title="Query: first load fails with 404"
-        expected="No toast and no retries (4xx); the card shows the error inline after 1 attempt."
+        id="not-found"
+        body={outcomes.notFound}
+        title="Query: first load finds nothing"
+        expected="200 with isSuccessful false: no toast, nothing logged, no retries; the card shows the message inline after 1 attempt."
       />
       <InitialLoadQuery
-        failure={problems.unavailable}
+        id="unavailable"
+        status={problems.unavailable.status}
+        body={problems.unavailable}
         title="Query: first load fails with 503"
         expected="Overlay stays up through 2 retries (~4s), then the error shows inline after 3 attempts; no toast."
       />

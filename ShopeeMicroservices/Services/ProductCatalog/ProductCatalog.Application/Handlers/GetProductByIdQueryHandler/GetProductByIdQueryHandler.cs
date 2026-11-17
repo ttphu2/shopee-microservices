@@ -1,4 +1,5 @@
 using Infrastructure.Abstractions.Messaging;
+using Infrastructure.Errors;
 using ProductCatalog.Application.DTOs;
 using ProductCatalog.Application.Mappers;
 using ProductCatalog.Domain.Repositories;
@@ -8,7 +9,7 @@ namespace ProductCatalog.Application.Handlers.GetProductByIdQueryHandler
     public class GetProductByIdQueryHandler(IProductCatalogRepository productCatalogRepository)
         : IQueryHandler<GetProductByIdQuery, ProductDetailsDto>
     {
-        public async Task<Result<ProductDetailsDto>> Handle(GetProductByIdQuery request, CancellationToken cancellationToken)
+        public async Task<Validation<ProductDetailsDto>> Handle(GetProductByIdQuery request, CancellationToken cancellationToken)
         {
             var product = await productCatalogRepository.GetProductByIdAsync(request.Id, cancellationToken);
 

@@ -1,4 +1,6 @@
+using System.Reflection;
 using HealthChecks.UI.Client;
+using Infrastructure.Exceptions;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -22,6 +24,8 @@ BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer(BsonType.String))
 
 builder.Services.AddControllers();
 
+builder.Services.AddGlobalExceptionHandler();
+
 builder.Services.AddEndpointsApiExplorer(); // discovers all API endpoints.
 builder.Services.AddSwaggerGen();
 
@@ -31,11 +35,16 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
+var isGeneratingOpenApi = Assembly.GetEntryAssembly()?.GetName().Name == "dotnet-swagger";
+
 // Seed the database and create its indexes, only if the database does not exist yet.
-await DatabaseInitializer.InitializeAsync(
-    app.Services.GetRequiredService<IMongoClient>(),
-    app.Services.GetRequiredService<IOptions<DatabaseSettings>>(),
-    app.Logger);
+if (!isGeneratingOpenApi)
+{
+    await DatabaseInitializer.InitializeAsync(
+        app.Services.GetRequiredService<IMongoClient>(),
+        app.Services.GetRequiredService<IOptions<DatabaseSettings>>(),
+        app.Logger);
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -52,7 +61,7 @@ app.UseRequestContextLogging();
 
 app.UseSerilogRequestLogging();
 
-app.UseCustomExceptionHandler();
+app.UseExceptionHandler();
 
 //app.UseAuthentication();
 

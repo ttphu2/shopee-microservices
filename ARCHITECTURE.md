@@ -17,9 +17,10 @@ ShopeeMicroservices/
 ├── ShopeeMicroservices.slnx
 ├── docker-compose.yml / docker-compose.override.yml   # catalogdb (mongo:8, --replSet rs0) + productcatalog.api (8000→8080)
 ├── Infrastructure/                       # shared building blocks used by every service
-│   ├── Abstractions/Messaging/           # ICommand, IQuery, handler interfaces, Result, Error
+│   ├── Abstractions/Messaging/           # ICommand, IQuery, handler interfaces
+│   ├── Errors/                           # Error, ValidationOutcome, Validation<T>, ValidationMessages
 │   ├── Abstractions/Behaviors/           # LoggingBehavior, ValidationBehavior, AddDefaultPipelineBehaviors()
-│   └── Exceptions/                       # ValidationException, ValidationError
+│   └── Exceptions/                       # GlobalExceptionHandler, AddGlobalExceptionHandler(), OptimisticLockingException
 └── Services/ProductCatalog/
     ├── ProductCatalog.API/               # Program.cs, ProductController, middleware, Dockerfile, http/catalog.http
     ├── ProductCatalog.Application/
@@ -78,20 +79,29 @@ As a rule of thumb, here is where each kind of logic belongs:
 2. HTTPS redirection
 3. Correlation id logging
 4. Serilog request logging
-5. `ExceptionHandlingMiddleware`
+5. `UseExceptionHandler()`, which runs the shared `GlobalExceptionHandler`
 6. Controllers
 
 Inside MediatR, `AddDefaultPipelineBehaviors()` registers two behaviors:
 1. `LoggingBehavior`
-2. `ValidationBehavior`, which runs the validators for commands. A failed validation becomes a 400 response.
+2. `ValidationBehavior`, which runs the validators for commands. A failed validation returns a failed `ValidationOutcome` without calling the handler.
 
-| Endpoint | Handler | Success | Errors |
+Every endpoint answers **200** with a `ValidationOutcome` body, including business errors. The client checks `isSuccessful`, never the status code:
+
+```json
+{ "value": { ... }, "isSuccessful": true, "validationMessages": null }
+{ "value": null, "isSuccessful": false, "validationMessages": { "messages": ["Brand not found."] } }
+```
+
+Commands without a result (update, delete) have no `value`. Controller actions return the handler's `Validation<T>` (or `ValidationOutcome`) directly, never `IActionResult`, so ASP.NET sends it as the 200 body and the return type alone documents the response in OpenAPI. Only unexpected exceptions return 500 `ProblemDetails`. ASP.NET's own model binding errors (for example malformed JSON) are still 400 `ProblemDetails` from `[ApiController]`.
+
+| Endpoint | Handler | `value` | Validation messages |
 |---|---|---|---|
-| `POST /api/Product` | `CreateProductCommandHandler` | 200 | 400 (validation, unknown brand/category), 409 (SKU code taken) |
-| `GET /api/Product` | `GetProductsQueryHandler` | 200 | — |
-| `GET /api/Product/{id}` | `GetProductByIdQueryHandler` | 200 `ProductDetailsDto` | 404 |
-| `PUT /api/Product/{id}` | `UpdateProductCommandHandler` | 204 | 400, 404, 409 |
-| `DELETE /api/Product/{id}` | `DeleteProductCommandHandler` | 204 | 404 |
+| `POST /api/Product` | `CreateProductCommandHandler` | `CreateProductResult` | validation, unknown brand/category, SKU code taken |
+| `GET /api/Product` | `GetProductsQueryHandler` | `GetProductsQueryResult` | — |
+| `GET /api/Product/{id}` | `GetProductByIdQueryHandler` | `ProductDetailsDto` | not found |
+| `PUT /api/Product/{id}` | `UpdateProductCommandHandler` | — | validation, not found, unknown brand/category, SKU code taken |
+| `DELETE /api/Product/{id}` | `DeleteProductCommandHandler` | — | validation, not found |
 
 ## How the main flows work
 
@@ -108,13 +118,13 @@ sequenceDiagram
     participant R as ProductCatalogRepository
     C->>PC: POST / PUT / DELETE
     PC->>VB: Send(command)
-    VB-->>C: 400 if validation fails
+    VB-->>C: 200, isSuccessful false, if validation fails
     VB->>H: Handle
     H->>H: Begin transaction
     H->>R: Reads and writes in the transaction
     H->>H: Commit on success, abort on failure
-    H-->>PC: Result
-    PC-->>C: 200/204, or 404 / 409 / 400
+    H-->>PC: ValidationOutcome
+    PC-->>C: 200 with the ValidationOutcome
 ```
 
 - **Create** checks that the brand and category exist and that none of the SKU codes belong to another product, then inserts the product and its SKUs.
@@ -161,12 +171,15 @@ At startup, `DatabaseIndexes` creates non-unique indexes on `ProductSkus.SpuId` 
 
 ## Cross-cutting concerns
 
-**Errors.** Handlers return `Result.Failure(...)` for expected problems instead of throwing, using `Error.NotFound` or one of the `ProductErrors`. `ProductController.CommandFailure` turns these into HTTP responses:
-- not found → 404
-- SKU code conflict → 409
-- anything else → 400
+**Errors.** Business errors are never exceptions and never change the status code. FluentValidation results, domain rule checks and "not found / no access" all become `ValidationMessages` in a failed `ValidationOutcome`, sent with HTTP 200:
+- `ValidationBehavior` turns validator failures into `ValidationMessages`.
+- Handlers return an `Error` (`Error.NotFound` or one of the `ProductErrors`); it converts implicitly to a failed `ValidationOutcome` or `Validation<T>`. Use `Error.NotFound` for "no access" as well, so the response doesn't reveal that the resource exists.
 
-Unexpected exceptions become a 500 in `ExceptionHandlingMiddleware`.
+`GlobalExceptionHandler`, in the shared Infrastructure project so every service can use it, handles exceptions:
+- `OptimisticLockingException` is the only exception that becomes a user message: 200 with `Error.OptimisticLocking`.
+- Anything else is a 500 `ProblemDetails` with a generic message. The details are only logged.
+
+A new service registers it with `builder.Services.AddGlobalExceptionHandler()` and `app.UseExceptionHandler()`.
 
 **Messages.** User-facing validation and error messages live in [`ServerMessages.resx`](ShopeeMicroservices/Services/ProductCatalog/ProductCatalog.Application/Resources/ServerMessages.resx). Visual Studio regenerates `ServerMessages.Designer.cs` whenever the file is edited.
 - Look messages up when they're used, so they follow the current culture: `WithMessage(_ => ServerMessages.X)` in validators, and properties in `ProductErrors`.
@@ -185,14 +198,16 @@ Unexpected exceptions become a 500 in `ExceptionHandlingMiddleware`.
 1. **Create a handler folder.** Add `Handlers/<UseCase>Handler/` with the command or query and its handler.
 2. **Commands:**
    - Inherit from `TransactionalCommandHandler`.
-   - Return `Result.Failure(...)` for business errors.
+   - Return an `Error` for business errors (it becomes a failed `ValidationOutcome`). Don't throw.
    - Add a validator in `Validators/`.
    - Put new messages in `ServerMessages.resx`.
 3. **Queries** return DTOs, never entities.
 4. **Keep controllers thin:**
    - Map the request with Mapster.
-   - Pass the `CancellationToken` to `_mediator.Send`.
-   - Use `CommandFailure` for errors.
+   - Pass the `CancellationToken` to `sender.Send`.
+   - Declare the action as `Task<Validation<TResult>>` (queries and commands with a result) or `Task<ValidationOutcome>` (commands without one), and return `sender.Send(...)` as is. Don't return `IActionResult`, `Ok(...)` or other status codes: the outcome carries any errors.
+   - Don't add `[ProducesResponseType]` to actions. A new controller copies `ProductController`'s two class-level attributes: an untyped `[ProducesResponseType(StatusCodes.Status200OK)]`, which documents each action's 200 with its return type, and the 500 `ProblemDetails` one. Without the untyped 200, any other response attribute stops ASP.NET from inferring the 200, and it disappears from OpenAPI.
+   - After changing an endpoint, run `pnpm gen:openapi && pnpm gen:api` in `client-app` to update `openapi/bff.json` and the TypeScript types. It needs no database: `Program.cs` skips `DatabaseInitializer` when the Swashbuckle CLI loads it.
 5. **New repository methods** should pass the `CancellationToken` through to the driver.
 6. **Before you open a PR:**
    - Build the solution.
@@ -203,7 +218,6 @@ Unexpected exceptions become a 500 in `ExceptionHandlingMiddleware`.
 
 - **SKU codes aren't unique in the database yet.** Older development data may already contain duplicates, so the `SkuCode` index is still non-unique. The handlers reject duplicates, but two simultaneous requests could still get through.
 - **`ProductCode` isn't unique either**, and there is no optimistic concurrency, so the last update wins.
-- **`GET /api/Product` returns the whole `Result` object** (`value`, `isSuccess`, `error`) instead of just the data.
 - **`BaseEntity` sets `Id` and `CreatedDate` in its constructor**, which also runs when documents are loaded. A document without `CreatedDate` comes back with the current time.
 - **There are no tests or CI pipelines yet.**
 - **Seeded ids differ per database.** Update the variables at the top of `catalog.http` before using it.
@@ -211,7 +225,7 @@ Unexpected exceptions become a 500 in `ExceptionHandlingMiddleware`.
 - **Some code is unused for now:**
   - `Repository<T>`
   - `IProductCatalogQueryService`
-  - `ConcurrencyException`
+  - `OptimisticLockingException`: nothing throws it yet, because entities have no version field
   - `Aggregate<T>` and domain events
   - `Inventory`
   - the brand/type lookups by name

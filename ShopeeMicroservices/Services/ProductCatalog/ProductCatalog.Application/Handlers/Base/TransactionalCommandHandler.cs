@@ -1,9 +1,10 @@
 ﻿using Infrastructure.Abstractions.Messaging;
+using Infrastructure.Errors;
 using ProductCatalog.Domain.Abstractions;
 
 namespace ProductCatalog.Application.Handlers.Base
 {
-    // Commits only when ExecuteAsync succeeds; a failure Result or an exception aborts the transaction.
+    // Commits only when ExecuteAsync succeeds; a failed ValidationOutcome or an exception aborts the transaction.
     public abstract class TransactionalCommandHandler<TCommand, TResponse>
         : ICommandHandler<TCommand, TResponse>
         where TCommand : ICommand<TResponse>
@@ -15,7 +16,7 @@ namespace ProductCatalog.Application.Handlers.Base
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<Result<TResponse>> Handle(TCommand request, CancellationToken cancellationToken)
+        public async Task<Validation<TResponse>> Handle(TCommand request, CancellationToken cancellationToken)
         {
             using var session = await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
@@ -23,7 +24,7 @@ namespace ProductCatalog.Application.Handlers.Base
             {
                 var result = await ExecuteAsync(request, cancellationToken);
 
-                if (result.IsSuccess)
+                if (result.IsSuccessful)
                 {
                     await _unitOfWork.CommitAsync(session, cancellationToken);
                 }
@@ -41,7 +42,7 @@ namespace ProductCatalog.Application.Handlers.Base
             }
         }
 
-        protected abstract Task<Result<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
+        protected abstract Task<Validation<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
     }
 
     // Same as above for commands that return no value.
@@ -56,7 +57,7 @@ namespace ProductCatalog.Application.Handlers.Base
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<Result> Handle(TCommand request, CancellationToken cancellationToken)
+        public async Task<ValidationOutcome> Handle(TCommand request, CancellationToken cancellationToken)
         {
             using var session = await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
@@ -64,7 +65,7 @@ namespace ProductCatalog.Application.Handlers.Base
             {
                 var result = await ExecuteAsync(request, cancellationToken);
 
-                if (result.IsSuccess)
+                if (result.IsSuccessful)
                 {
                     await _unitOfWork.CommitAsync(session, cancellationToken);
                 }
@@ -82,6 +83,6 @@ namespace ProductCatalog.Application.Handlers.Base
             }
         }
 
-        protected abstract Task<Result> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
+        protected abstract Task<ValidationOutcome> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
     }
 }

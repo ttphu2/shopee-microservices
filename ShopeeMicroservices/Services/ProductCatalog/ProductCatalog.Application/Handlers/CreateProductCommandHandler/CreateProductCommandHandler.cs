@@ -1,4 +1,4 @@
-using Infrastructure.Abstractions.Messaging;
+using Infrastructure.Errors;
 using ProductCatalog.Application.Errors;
 using ProductCatalog.Application.Handlers.Base;
 using ProductCatalog.Domain.Abstractions;
@@ -16,7 +16,7 @@ namespace ProductCatalog.Application.Handlers.CreateProductCommandHandler
             _productCatalogRepository = productCatalogRepository;
         }
 
-        protected override async Task<Result<CreateProductResult>> ExecuteAsync(CreateProductCommand request, CancellationToken cancellationToken)
+        protected override async Task<Validation<CreateProductResult>> ExecuteAsync(CreateProductCommand request, CancellationToken cancellationToken)
         {
             if (await _productCatalogRepository.GetBrandByIdAsync(request.BrandId, cancellationToken) is null)
             {
@@ -61,7 +61,7 @@ namespace ProductCatalog.Application.Handlers.CreateProductCommandHandler
 
             await _productCatalogRepository.CreateSkusAsync(skus, cancellationToken);
 
-            return Result.Success(new CreateProductResult());
+            return ValidationOutcome.Success(new CreateProductResult());
         }
     }
 }

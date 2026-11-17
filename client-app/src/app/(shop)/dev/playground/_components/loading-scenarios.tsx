@@ -6,7 +6,7 @@ import { useActionState, useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { useGlobalLoading } from "@/shared/ui/loading-overlay";
 import { saveDraftAction, subscribeAction, type NewsletterState } from "../_lib/actions";
-import { mockApiCall } from "../_lib/mock-api";
+import { mockApiCall, success } from "../_lib/mock-api";
 import { ScenarioCard, ScenarioResult } from "./scenario-card";
 
 // Each run uses a new query key, so every click is a fresh first load.
@@ -19,7 +19,7 @@ function SlowQuery() {
   const { run, next } = useRunCounter();
   const query = useQuery({
     queryKey: ["playground", "slow-query", run],
-    queryFn: () => mockApiCall<{ items: number }>({ status: 200, body: { items: 24 }, delayMs: 2000 }),
+    queryFn: () => mockApiCall<{ items: number }>({ body: success({ items: 24 }), delayMs: 2000 }),
     enabled: run > 0,
   });
 
@@ -40,7 +40,7 @@ function FastQuery() {
   const { run, next } = useRunCounter();
   const query = useQuery({
     queryKey: ["playground", "fast-query", run],
-    queryFn: () => mockApiCall<{ ok: true }>({ status: 200, body: { ok: true }, delayMs: 80 }),
+    queryFn: () => mockApiCall<{ ok: true }>({ body: success({ ok: true as const }), delayMs: 80 }),
     enabled: run > 0,
   });
 
@@ -59,8 +59,7 @@ function BackgroundRefetch() {
   const query = useQuery({
     queryKey: ["playground", "background-refetch-ok"],
     queryFn: () => mockApiCall<{ at: string }>({
-      status: 200,
-      body: { at: new Date().toLocaleTimeString() },
+      body: success({ at: new Date().toLocaleTimeString() }),
       delayMs: 2000,
     }),
     enabled: false,
@@ -89,7 +88,7 @@ function ParallelQueries() {
   const queries = useQueries({
     queries: PARALLEL_DELAYS_MS.map((delayMs) => ({
       queryKey: ["playground", "parallel", delayMs, run],
-      queryFn: () => mockApiCall<number>({ status: 200, body: delayMs, delayMs }),
+      queryFn: () => mockApiCall<number>({ body: success(delayMs), delayMs }),
       enabled: run > 0,
     })),
   });
@@ -110,7 +109,7 @@ function ParallelQueries() {
 
 function SlowMutation() {
   const mutation = useMutation({
-    mutationFn: () => mockApiCall<{ id: string }>({ status: 200, body: { id: "p-123" }, delayMs: 2000 }),
+    mutationFn: () => mockApiCall<{ id: string }>({ body: success({ id: "p-123" }), delayMs: 2000 }),
   });
 
   return (

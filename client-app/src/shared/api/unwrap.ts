@@ -1,10 +1,12 @@
-import { ApiError } from "./api-error";
+import { ApiError, type ValidationOutcome } from "./api-error";
 
 export function unwrap<T>(result: {
-  data?: T;
+  data?: ValidationOutcome<T>;
   error?: unknown;
   response: Response;
 }): T {
-  if (result.data !== undefined) return result.data;
-  throw ApiError.from(result.response, result.error);
+  const { data, response } = result;
+  if (data === undefined) throw ApiError.from(response, result.error);
+  if (data.isSuccessful !== true) throw ApiError.fromOutcome(response, data);
+  return data.value as T;
 }

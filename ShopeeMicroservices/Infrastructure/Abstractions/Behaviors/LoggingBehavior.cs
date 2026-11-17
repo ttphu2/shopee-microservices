@@ -1,4 +1,4 @@
-﻿using Infrastructure.Abstractions.Messaging;
+﻿using Infrastructure.Errors;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
@@ -8,7 +8,7 @@ namespace Infrastructure.Abstractions.Behaviors;
 public class LoggingBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IBaseRequest
-    where TResponse : Result
+    where TResponse : ValidationOutcome
 {
     private readonly ILogger<LoggingBehavior<TRequest, TResponse>> _logger;
 
@@ -30,15 +30,15 @@ public class LoggingBehavior<TRequest, TResponse>
 
             var result = await next();
 
-            if (result.IsSuccess)
+            if (result.IsSuccessful)
             {
                 _logger.LogInformation("Request {RequestName} processed successfully", requestName);
             }
             else
             {
-                using (LogContext.PushProperty("Error", result.Error, true))
+                using (LogContext.PushProperty("ValidationMessages", result.ValidationMessages?.Messages, true))
                 {
-                    _logger.LogError("Request {RequestName} processed with error", requestName);
+                    _logger.LogWarning("Request {RequestName} processed with validation messages", requestName);
                 }
             }
 

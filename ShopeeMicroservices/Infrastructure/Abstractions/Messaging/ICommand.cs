@@ -1,12 +1,13 @@
-﻿using MediatR;
+﻿using Infrastructure.Errors;
+using MediatR;
 
 namespace Infrastructure.Abstractions.Messaging;
 
-public interface ICommand : IRequest<Result>, IBaseCommand
+public interface ICommand : IRequest<ValidationOutcome>, IBaseCommand
 {
 }
 
-public interface ICommand<TReponse> : IRequest<Result<TReponse>>, IBaseCommand
+public interface ICommand<TReponse> : IRequest<Validation<TReponse>>, IBaseCommand
 {
 }
 

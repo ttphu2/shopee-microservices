@@ -1,4 +1,4 @@
-using Infrastructure.Abstractions.Messaging;
+using Infrastructure.Errors;
 using ProductCatalog.Application.Handlers.Base;
 using ProductCatalog.Domain.Abstractions;
 using ProductCatalog.Domain.Repositories;
@@ -15,7 +15,7 @@ namespace ProductCatalog.Application.Handlers.DeleteProductCommandHandler
             _productCatalogRepository = productCatalogRepository;
         }
 
-        protected override async Task<Result> ExecuteAsync(DeleteProductCommand request, CancellationToken cancellationToken)
+        protected override async Task<ValidationOutcome> ExecuteAsync(DeleteProductCommand request, CancellationToken cancellationToken)
         {
             var product = await _productCatalogRepository.GetProductByIdAsync(request.Id, cancellationToken);
 
@@ -27,7 +27,7 @@ namespace ProductCatalog.Application.Handlers.DeleteProductCommandHandler
             await _productCatalogRepository.DeleteSkusByProductIdAsync(product.Id, cancellationToken);
             await _productCatalogRepository.DeleteProductAsync(product.Id, cancellationToken);
 
-            return Result.Success();
+            return ValidationOutcome.Success();
         }
     }
 }

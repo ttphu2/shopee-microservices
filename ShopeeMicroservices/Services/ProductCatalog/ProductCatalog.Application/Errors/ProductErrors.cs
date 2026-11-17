@@ -1,10 +1,10 @@
 using System.Globalization;
-using Infrastructure.Abstractions.Messaging;
+using Infrastructure.Errors;
 using ProductCatalog.Application.Resources;
 
 namespace ProductCatalog.Application.Errors
 {
-    // Codes are constants so callers (e.g. the API's HTTP status mapping) can match on them.
+    // Codes are constants so callers can match on them.
     // Fixed errors are created once; errors whose message depends on input are methods.
     public static class ProductErrors
     {

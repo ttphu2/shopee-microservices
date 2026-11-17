@@ -11,7 +11,37 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GetProductsQueryResultValidation"];
+                        "application/json": components["schemas"]["GetProductsQueryResultValidation"];
+                        "text/json": components["schemas"]["GetProductsQueryResultValidation"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
         put?: never;
         post: {
             parameters: {
@@ -34,16 +64,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["CreateProductResult"];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/plain": components["schemas"]["CreateProductResultValidation"];
+                        "application/json": components["schemas"]["CreateProductResultValidation"];
+                        "text/json": components["schemas"]["CreateProductResultValidation"];
                     };
                 };
                 /** @description Internal Server Error */
@@ -52,7 +75,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ProblemDetails"];
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
             };
@@ -63,27 +86,151 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Product/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProductDetailsDtoValidation"];
+                        "application/json": components["schemas"]["ProductDetailsDtoValidation"];
+                        "text/json": components["schemas"]["ProductDetailsDtoValidation"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateProductRequest"];
+                    "text/json": components["schemas"]["UpdateProductRequest"];
+                    "application/*+json": components["schemas"]["UpdateProductRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationOutcome"];
+                        "application/json": components["schemas"]["ValidationOutcome"];
+                        "text/json": components["schemas"]["ValidationOutcome"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidationOutcome"];
+                        "application/json": components["schemas"]["ValidationOutcome"];
+                        "text/json": components["schemas"]["ValidationOutcome"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         CreateProductRequest: {
-            productCode: string;
-            name: string;
-            description: string;
-            brandId: string;
-            categoryId: string;
-            images?: string[];
-            variantOptions?: components["schemas"]["VariantOption"][];
-            skus?: components["schemas"]["CreateProductSkuRequest"][];
+            productCode: string | null;
+            name: string | null;
+            description: string | null;
+            brandId: string | null;
+            categoryId: string | null;
+            images?: string[] | null;
+            variantOptions?: components["schemas"]["VariantOption"][] | null;
+            skus?: components["schemas"]["ProductSkuRequest"][] | null;
         };
         CreateProductResult: Record<string, never>;
-        CreateProductSkuRequest: {
-            skuCode?: string;
-            /** Format: double */
-            price?: number;
-            imageUrl?: string | null;
-            attributes?: components["schemas"]["SkuAttribute"][];
+        CreateProductResultValidation: {
+            readonly isSuccessful?: boolean;
+            validationMessages?: components["schemas"]["ValidationMessages"];
+            value?: components["schemas"]["CreateProductResult"];
+        };
+        GetProductsQueryResult: {
+            products?: components["schemas"]["ProductSpuDto"][] | null;
+        };
+        GetProductsQueryResultValidation: {
+            readonly isSuccessful?: boolean;
+            validationMessages?: components["schemas"]["ValidationMessages"];
+            value?: components["schemas"]["GetProductsQueryResult"];
         };
         ProblemDetails: {
             type?: string | null;
@@ -95,14 +242,100 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        ProductBrandDto: {
+            id?: string | null;
+            name?: string | null;
+        };
+        ProductDetailsDto: {
+            product?: components["schemas"]["ProductSpuDto"];
+            brand?: components["schemas"]["ProductBrandDto"];
+            type?: components["schemas"]["ProductTypeDto"];
+            skus?: components["schemas"]["ProductSkuDto"][] | null;
+            /** Format: double */
+            minPrice?: number | null;
+            /** Format: double */
+            maxPrice?: number | null;
+        };
+        ProductDetailsDtoValidation: {
+            readonly isSuccessful?: boolean;
+            validationMessages?: components["schemas"]["ValidationMessages"];
+            value?: components["schemas"]["ProductDetailsDto"];
+        };
+        ProductSkuDto: {
+            id?: string | null;
+            spuId?: string | null;
+            skuCode?: string | null;
+            /** Format: double */
+            price?: number;
+            imageUrl?: string | null;
+            attributes?: components["schemas"]["SkuAttributeDto"][] | null;
+            /** Format: date-time */
+            createdDate?: string | null;
+            createdBy?: string | null;
+            /** Format: date-time */
+            lastModified?: string | null;
+            lastModifiedBy?: string | null;
+        };
+        ProductSkuRequest: {
+            skuCode?: string | null;
+            /** Format: double */
+            price?: number;
+            imageUrl?: string | null;
+            attributes?: components["schemas"]["SkuAttribute"][] | null;
+        };
+        ProductSpuDto: {
+            id?: string | null;
+            productCode?: string | null;
+            name?: string | null;
+            description?: string | null;
+            brandId?: string | null;
+            categoryId?: string | null;
+            images?: string[] | null;
+            variantOptions?: components["schemas"]["VariantOptionDto"][] | null;
+            /** Format: date-time */
+            createdDate?: string | null;
+            createdBy?: string | null;
+            /** Format: date-time */
+            lastModified?: string | null;
+            lastModifiedBy?: string | null;
+        };
+        ProductTypeDto: {
+            id?: string | null;
+            name?: string | null;
+        };
         SkuAttribute: {
-            attributeCode?: string;
-            value?: string;
+            attributeCode?: string | null;
+            value?: string | null;
+        };
+        SkuAttributeDto: {
+            attributeCode?: string | null;
+            value?: string | null;
+        };
+        UpdateProductRequest: {
+            name: string | null;
+            description: string | null;
+            brandId: string | null;
+            categoryId: string | null;
+            images?: string[] | null;
+            variantOptions?: components["schemas"]["VariantOption"][] | null;
+            skus?: components["schemas"]["ProductSkuRequest"][] | null;
+        };
+        ValidationMessages: {
+            readonly messages?: string[] | null;
+        };
+        ValidationOutcome: {
+            readonly isSuccessful?: boolean;
+            validationMessages?: components["schemas"]["ValidationMessages"];
         };
         VariantOption: {
-            name?: string;
-            code?: string;
-            values?: string[];
+            name?: string | null;
+            code?: string | null;
+            values?: string[] | null;
+        };
+        VariantOptionDto: {
+            name?: string | null;
+            code?: string | null;
+            values?: string[] | null;
         };
     };
     responses: never;

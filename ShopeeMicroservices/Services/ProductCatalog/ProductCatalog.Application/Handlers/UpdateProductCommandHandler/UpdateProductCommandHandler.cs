@@ -1,4 +1,4 @@
-using Infrastructure.Abstractions.Messaging;
+using Infrastructure.Errors;
 using ProductCatalog.Application.Abstractions.Clock;
 using ProductCatalog.Application.Errors;
 using ProductCatalog.Application.Handlers.Base;
@@ -22,7 +22,7 @@ namespace ProductCatalog.Application.Handlers.UpdateProductCommandHandler
             _dateTimeProvider = dateTimeProvider;
         }
 
-        protected override async Task<Result> ExecuteAsync(UpdateProductCommand request, CancellationToken cancellationToken)
+        protected override async Task<ValidationOutcome> ExecuteAsync(UpdateProductCommand request, CancellationToken cancellationToken)
         {
             var product = await _productCatalogRepository.GetProductByIdAsync(request.Id, cancellationToken);
 
@@ -94,7 +94,7 @@ namespace ProductCatalog.Application.Handlers.UpdateProductCommandHandler
             await _productCatalogRepository.CreateSkusAsync(addedSkus, cancellationToken);
             await _productCatalogRepository.DeleteSkusAsync(removedSkuIds, cancellationToken);
 
-            return Result.Success();
+            return ValidationOutcome.Success();
         }
     }
 }
