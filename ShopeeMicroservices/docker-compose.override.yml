@@ -6,7 +6,7 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - mongo_data:/data/db
+      - mongo_catalog:/data/db
     # Transactions need replica set rs0. The first check initiates it (later checks skip that);
     # the container is healthy once this node is the writable primary.
     healthcheck:
@@ -15,6 +15,7 @@ services:
       timeout: 10s
       retries: 12
       start_period: 10s
+  
   productcatalog.api:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
@@ -32,6 +33,44 @@ services:
     ports:
       - "6000:8080"
       - "6060:8081"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+  basketdb:
+    container_name: basketdb
+    restart: always
+    environment:
+      # Local development credentials only.
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=BasketDb
+    ports:
+      - "5432:5432"
+    volumes:
+      # postgres 18+ images keep their data under /var/lib/postgresql/<major>/docker.
+      - postgres_basket:/var/lib/postgresql
+
+  distributedcache:
+    container_name: distributedcache
+    restart: always
+    ports:
+      - "6379:6379"
+
+  basket.api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+      - "ConnectionStrings__Database=Host=basketdb;Port=5432;Database=BasketDb;Username=postgres;Password=postgres"
+      - "ConnectionStrings__Redis=distributedcache:6379"
+    depends_on:
+      - basketdb
+      - distributedcache
+    ports:
+      - "6001:8080"
+      - "6061:8081"
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro

@@ -1,0 +1,38 @@
+# Docker Compose: http://localhost:6001 · dotnet run: http://localhost:5001
+@baseUrl = http://localhost:6001
+@userName = john
+# Product and SKU from ProductCatalog's seed data (CatalogSeedData): iPhone X
+@productId = 019a7e00-0000-7000-8000-000000000301
+# Basket endpoints answer 200 with { "value": ..., "isSuccessful": true, "validationMessages": null } or isSuccessful false + validationMessages.
+
+### Health check (200 "Healthy" with npgsql and redis entries)
+GET {{baseUrl}}/health
+
+### Store basket (value = the basket with its totalPrice). Replaces the whole basket.
+PUT {{baseUrl}}/basket/{{userName}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productId": "{{productId}}",
+      "skuCode": "IPHONE-X-SG-64",
+      "productName": "iPhone X",
+      "price": 799.00,
+      "quantity": 1
+    },
+    {
+      "productId": "{{productId}}",
+      "skuCode": "IPHONE-X-SL-256",
+      "productName": "iPhone X",
+      "price": 899.00,
+      "quantity": 2
+    }
+  ]
+}
+
+### Get basket
+GET {{baseUrl}}/basket/{{userName}}
+
+### Delete basket (no value)
+DELETE {{baseUrl}}/basket/{{userName}}
