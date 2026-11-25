@@ -6,6 +6,12 @@
     <Project Path="Services/Basket/Basket.Domain/Basket.Domain.csproj" />
     <Project Path="Services/Basket/Basket.Infrastructure/Basket.Infrastructure.csproj" />
  </Folder>
+  <Folder Name="/Services/Discount/">
+    <Project Path="Services/Discount/Discount.Application/Discount.Application.csproj" />
+    <Project Path="Services/Discount/Discount.Domain/Discount.Domain.csproj" />
+    <Project Path="Services/Discount/Discount.Grpc/Discount.Grpc.csproj" />
+    <Project Path="Services/Discount/Discount.Infrastructure/Discount.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/Services/ProductCatalog/">
     <Project Path="Services/ProductCatalog/ProductCatalog.API/ProductCatalog.API.csproj" />
     <Project Path="Services/ProductCatalog/ProductCatalog.Application/ProductCatalog.Application.csproj" />

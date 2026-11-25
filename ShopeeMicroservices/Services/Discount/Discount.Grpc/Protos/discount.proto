@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+option csharp_namespace = "Discount.Grpc";
+
+package discount;
+
+// A coupon is looked up by product id + SKU code (Basket items carry both); a SKU has at most one coupon.
+// Errors follow gRPC status codes: INVALID_ARGUMENT (validation), NOT_FOUND, ALREADY_EXISTS (SKU already has a
+// coupon), UNKNOWN (unexpected). The status message holds the message(s). Rich error details (grpc-status-details-bin)
+// carry google.rpc.BadRequest for INVALID_ARGUMENT (field = proto field name, e.g. sku_code) and google.rpc.ErrorInfo
+// for business errors (reason = error code, e.g. Error.NotFound; domain = discount).
+service DiscountProtoService {
+  rpc GetDiscount (GetDiscountRequest) returns (CouponResponse);
+  rpc CreateDiscount (CreateDiscountRequest) returns (CouponResponse);
+  rpc UpdateDiscount (UpdateDiscountRequest) returns (CouponResponse);
+  rpc DeleteDiscount (DeleteDiscountRequest) returns (DeleteDiscountResponse);
+}
+
+message GetDiscountRequest {
+  string product_id = 1;
+  string sku_code = 2;
+}
+
+message CreateDiscountRequest {
+  string product_id = 1;
+  string sku_code = 2;
+  string description = 3;
+  DecimalValue amount = 4;
+}
+
+message UpdateDiscountRequest {
+  int32 id = 1;
+  string product_id = 2;
+  string sku_code = 3;
+  string description = 4;
+  DecimalValue amount = 5;
+}
+
+message DeleteDiscountRequest {
+  string product_id = 1;
+  string sku_code = 2;
+}
+
+message CouponResponse {
+  int32 id = 1;
+  string product_id = 2; // ProductCatalog product id (reference only)
+  string sku_code = 3;
+  string description = 4;
+  DecimalValue amount = 5;
+}
+
+message DeleteDiscountResponse {
+  bool success = 1;
+}
+
+// Protobuf has no decimal type. Value = units + nanos / 1,000,000,000 (both carry the same sign).
+message DecimalValue {
+  int64 units = 1;
+  sfixed32 nanos = 2;
+}

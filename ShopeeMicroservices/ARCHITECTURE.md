@@ -1,23 +1,23 @@
-# ARCHITECTURE.md — ShopeeMicroservices
+﻿# ARCHITECTURE.md — ShopeeMicroservices
 
-> Index into the source, not a replacement for it. Path convention: `ProductCatalog.*/…` = `Services/ProductCatalog/ProductCatalog.*/…`; `Basket.*/…` = `Services/Basket/Basket.*/…`; `Infrastructure/…` = the **shared** library at repo root (not `ProductCatalog.Infrastructure` / `Basket.Infrastructure`).
-> Verified against source on 2026-11-15.
+> Index into the source, not a replacement for it. Path convention: `ProductCatalog.*/…` = `Services/ProductCatalog/ProductCatalog.*/…`; `Basket.*/…` = `Services/Basket/Basket.*/…`; `Discount.*/…` = `Services/Discount/Discount.*/…`; `Infrastructure/…` = the **shared** library at repo root (not `ProductCatalog.Infrastructure` / `Basket.Infrastructure` / `Discount.Infrastructure`).
+> Verified against source on 2026-11-25.
 
 ## A. Project Identity
 
-- **Purpose:** E-commerce backend. Two independent services (no calls between them): **ProductCatalog** (products = SPU, variants = SKU, brands, types) and **Basket** (one shopping cart per user name).
-- **Type:** ASP.NET Core Web APIs (`net10.0`) with controllers + Swagger (Development only).
-- **Tech:** MediatR 14 (CQRS), FluentValidation 12, Serilog (Console + daily rolling file), Docker Compose. ProductCatalog: Mapster 10, MongoDB.Driver 3.10 (MongoDB 8, replica set `rs0`). Basket: EF Core 10 + Npgsql (PostgreSQL 18), Redis 8 via `IDistributedCache`.
-- **Style:** both services = **Clean Architecture** with the same 4-project layout (`*.API` → `*.Application` → `*.Domain`; `*.Infrastructure` implements the Domain/Application ports). Both use CQRS via MediatR + the `ValidationOutcome` pattern from the shared `Infrastructure/` library.
-- **Entry points:** `ProductCatalog.API/Program.cs` (`ProductController`, 5 CRUD endpoints) and `Basket.API/Program.cs` (`BasketController`, `/basket/{userName}` GET/PUT/DELETE). See I.
-- **Key traits:** ProductCatalog command handlers run in a MongoDB multi-document transaction (`TransactionalCommandHandler`); Basket reads go through a Redis cache-aside decorator (`CachedBasketRepository`); every endpoint answers **200** with the handler's `ValidationOutcome` / `Validation<T>` as body — business errors, `not found` and validator failures are `isSuccessful: false` + `validationMessages`, never a status code; only unexpected exceptions become 500 `ProblemDetails` in the shared `GlobalExceptionHandler`; each service creates its database on first start; no auth, no messaging, no tests.
+- **Purpose:** E-commerce backend. Three independent services (no calls between them yet): **ProductCatalog** (products = SPU, variants = SKU, brands, types), **Basket** (one shopping cart per user name) and **Discount** (one coupon per SKU code, gRPC).
+- **Type:** ProductCatalog and Basket = ASP.NET Core Web APIs (`net10.0`) with controllers + Swagger (Development only); Discount = ASP.NET Core gRPC service (HTTP/2 only).
+- **Tech:** MediatR 14 (CQRS), FluentValidation 12, Serilog (Console + daily rolling file), Docker Compose. ProductCatalog: Mapster 10, MongoDB.Driver 3.10 (MongoDB 8, replica set `rs0`). Basket: EF Core 10 + Npgsql (PostgreSQL 18), Redis 8 via `IDistributedCache`. Discount: Grpc.AspNetCore 2.71 (+ server reflection in Development, Grpc.StatusProto for rich error details), EF Core 10 + Npgsql **with migrations** (PostgreSQL 18).
+- **Style:** all three services = **Clean Architecture** with the same 4-project layout (`*.API` / `Discount.Grpc` → `*.Application` → `*.Domain`; `*.Infrastructure` implements the Domain/Application ports). All use CQRS via MediatR + the `ValidationOutcome` pattern from the shared `Infrastructure/` library.
+- **Entry points:** `ProductCatalog.API/Program.cs` (`ProductController`, 5 CRUD endpoints), `Basket.API/Program.cs` (`BasketController`, `/basket/{userName}` GET/PUT/DELETE) and `Discount.Grpc/Program.cs` (`DiscountService`, 4 RPCs of `discount.DiscountProtoService`). See I.
+- **Key traits:** ProductCatalog command handlers run in a MongoDB multi-document transaction (`TransactionalCommandHandler`); Basket reads go through a Redis cache-aside decorator (`CachedBasketRepository`); every endpoint answers **200** with the handler's `ValidationOutcome` / `Validation<T>` as body — business errors, `not found` and validator failures are `isSuccessful: false` + `validationMessages`, never a status code; only unexpected exceptions become 500 `ProblemDetails` in the shared `GlobalExceptionHandler`; Discount (gRPC) instead follows gRPC conventions: handlers return the same `Error` outcomes, and `RpcStatusMapper` throws them as `RpcException` (`NotFound`, `AlreadyExists`, `InvalidArgument`); each service creates its database on first start; no auth, no messaging, no tests.
 
 ## B. Repository Map
 
 | Path | Responsibility | Key Symbols |
 |---|---|---|
-| `ShopeeMicroservices.slnx` | Solution (6 projects + `docker-compose.dcproj`) | — |
-| `docker-compose.yml`, `docker-compose.override.yml` | Containers + env config: `catalogdb` (Mongo), `productcatalog.api`, `basketdb` (PostgreSQL), `distributedcache` (Redis), `basket.api` | service names |
+| `ShopeeMicroservices.slnx` | Solution (13 projects + `docker-compose.dcproj`) | — |
+| `docker-compose.yml`, `docker-compose.override.yml` | Containers + env config: `catalogdb` (Mongo), `productcatalog.api`, `basketdb` (PostgreSQL), `distributedcache` (Redis), `basket.api`, `discountdb` (PostgreSQL), `discount.grpc` | service names |
 | `Infrastructure/Abstractions/Messaging/` | Shared CQRS request/handler contracts | `ICommand`, `IQuery`, `ICommandHandler`, `IQueryHandler` |
 | `Infrastructure/Errors/` | Outcome types returned by every handler and sent as the 200 body | `ValidationOutcome`, `Validation<T>`, `ValidationMessages`, `Error` |
 | `Infrastructure/Abstractions/Behaviors/` | Shared MediatR pipeline | `LoggingBehavior`, `ValidationBehavior`, `AddDefaultPipelineBehaviors` |
@@ -38,6 +38,12 @@
 | `Basket.Application/Validators/`, `Basket.Application/DTOs/`, `Basket.Application/Mappers/`, `Basket.Application/Resources/` | Validators, request/response DTOs, entity↔DTO mapping, messages (resx) | `StoreBasketCommandValidator`, `ShoppingCartDto`, `BasketMapper`, `ServerMessages` |
 | `Basket.Domain/` | Entities + repository port (no package references) | `ShoppingCart`, `ShoppingCartItem`, `IBasketRepository` |
 | `Basket.Infrastructure/` | EF Core/PostgreSQL store, Redis cache-aside decorator, DI, DB creation | `BasketDbContext`, `BasketRepository`, `CachedBasketRepository`, `AddInfrastructure`, `DatabaseInitializer` |
+| `Discount.Grpc/` | gRPC host, composition root, proto ↔ application mapping, outcome → gRPC status | `Program.cs`, `Services/DiscountService`, `Mappers/DiscountProtoMapper`, `Mappers/RpcStatusMapper` |
+| `Discount.Grpc/Protos/discount.proto` | gRPC contract: service + messages (server stubs generated at build) | `DiscountProtoService`, `CouponResponse`, `DecimalValue` |
+| `Discount.Application/Handlers/` | One folder per use case (command/query + handler) | `GetDiscountQueryHandler`, `Create/Update/DeleteDiscountCommandHandler` |
+| `Discount.Application/Validators/`, `Discount.Application/DTOs/`, `Discount.Application/Mappers/`, `Discount.Application/Resources/` | Validators, DTO, entity→DTO mapping, messages (resx) | `CreateDiscountCommandValidator`, `CouponDto`, `CouponMapper`, `ServerMessages` |
+| `Discount.Domain/` | Entity, lookup-key value object, repository port (no package references) | `Coupon`, `CouponKey`, `ICouponRepository` |
+| `Discount.Infrastructure/` | EF Core/PostgreSQL store, entity configuration, migrations, seed, DI | `DiscountDbContext`, `CouponConfiguration`, `Migrations/`, `CouponRepository`, `DiscountSeedData`, `DatabaseInitializer` |
 
 ## C. Architecture Overview
 
@@ -67,9 +73,16 @@ flowchart TB
   BAPI -->|"cache-aside (IDistributedCache)"| REDIS[("Redis 8 · keys basket:{userName}")]
   BAPI -->|EF Core + Npgsql| PG[("PostgreSQL 18 · BasketDb")]
   BAPI -->|Serilog| LOGS
+  GClient[[gRPC client]] --> DGRPC
+  subgraph DS["Discount service (Clean Architecture)"]
+    DGRPC["Discount.Grpc (DiscountService) → Discount.Application → Discount.Domain<br/>Discount.Infrastructure: CouponRepository · migrations"]
+  end
+  DGRPC --> SH
+  DGRPC -->|EF Core + Npgsql| DPG[("PostgreSQL 18 · DiscountDb")]
+  DGRPC -->|Serilog| LOGS
 ```
 
-Project references (csproj-verified), identical shape in both services: `*.API` → `*.Application`, `*.Infrastructure`; `*.Infrastructure` → `*.Application`; `*.Application` → `*.Domain`, shared `Infrastructure`. `Basket.Domain` has no package references (EF mapping lives in `BasketDbContext`); `ProductCatalog.Domain` references `MongoDB.Driver`. The two services share no code besides `Infrastructure/` and do not call each other. No circular dependencies.
+Project references (csproj-verified), identical shape in all three services: `*.API` / `Discount.Grpc` → `*.Application`, `*.Infrastructure`; `*.Infrastructure` → `*.Application`; `*.Application` → `*.Domain`, shared `Infrastructure`. `Basket.Domain` and `Discount.Domain` have no package references (EF mapping lives in the Infrastructure projects); `ProductCatalog.Domain` references `MongoDB.Driver`. The services share no code besides `Infrastructure/` and do not call each other. No circular dependencies.
 
 ## D. Module Index
 
@@ -77,7 +90,7 @@ Project references (csproj-verified), identical shape in both services: `*.API` 
 |---|---|---|---|---|
 | API host | DI composition, BSON serializer registration, startup index+seed, middleware pipeline | `Program.cs`; `AddApplication()`, `AddInfrastructure()` | Application, PC.Infrastructure, Serilog, Swashbuckle | `ProductCatalog.API/Program.cs` |
 | Product endpoints | HTTP → MediatR; each action returns `sender.Send(...)` as `Task<Validation<T>>` / `Task<ValidationOutcome>` (the 200 body) — no `IActionResult` | `ProductController` | `ISender`, Mapster `Adapt<T>()` | `ProductCatalog.API/Controllers/ProductController.cs` |
-| Responses (shared, both services) | **Every handler outcome** is returned as-is → **200**: success `{ "value": …, "isSuccessful": true, "validationMessages": null }`, failure `{ "value": null, "isSuccessful": false, "validationMessages": { "messages": [...] } }` (no `value` for `ValidationOutcome`). Only **unexpected exceptions** → `GlobalExceptionHandler` → 500 `ProblemDetails` (`application/problem+json`, `traceId`); `OptimisticLockingException` → 200 failure with `Error.OptimisticLocking` | controller action return type `Task<Validation<T>>` / `Task<ValidationOutcome>`; `AddGlobalExceptionHandler()` + `app.UseExceptionHandler()` | ASP.NET Core `IProblemDetailsService`, `IExceptionHandler` | `Infrastructure/Errors/`, `Infrastructure/Exceptions/` |
+| Responses (shared, HTTP APIs; Discount gRPC uses status codes, K6) | **Every handler outcome** is returned as-is → **200**: success `{ "value": …, "isSuccessful": true, "validationMessages": null }`, failure `{ "value": null, "isSuccessful": false, "validationMessages": { "messages": [...] } }` (no `value` for `ValidationOutcome`). Only **unexpected exceptions** → `GlobalExceptionHandler` → 500 `ProblemDetails` (`application/problem+json`, `traceId`); `OptimisticLockingException` → 200 failure with `Error.OptimisticLocking` | controller action return type `Task<Validation<T>>` / `Task<ValidationOutcome>`; `AddGlobalExceptionHandler()` + `app.UseExceptionHandler()` | ASP.NET Core `IProblemDetailsService`, `IExceptionHandler` | `Infrastructure/Errors/`, `Infrastructure/Exceptions/` |
 | Correlation logging | Pushes `CorrelationId` (header `X-Correlation-Id` or `TraceIdentifier`) to Serilog `LogContext` | `RequestContextLoggingMiddleware` | Serilog (`Enrich: FromLogContext`) | `ProductCatalog.API/Middleware/RequestContextLoggingMiddleware.cs` |
 | CQRS kernel (shared) | Request markers, `ValidationOutcome`/`Error`, logging + validation behaviors | `ICommand`/`ICommand<T>`/`IQuery<T>`, `AddDefaultPipelineBehaviors()` | MediatR, FluentValidation, Serilog | `Infrastructure/Abstractions/`, `Infrastructure/Errors/` |
 | Product use cases | Create/Update/Delete (transactional), GetById, GetAll | handlers in `ProductCatalog.Application/Handlers/<UseCase>/` | `IProductCatalogRepository`, `IUnitOfWork`, `IDateTimeProvider` | `ProductCatalog.Application/Handlers/` |
@@ -89,6 +102,9 @@ Project references (csproj-verified), identical shape in both services: `*.API` 
 | Startup data | Only if `DatabaseName` does not exist: seed `CatalogSeedData`, then create indexes; an existing database is never touched | `DatabaseInitializer.InitializeAsync` (`DatabaseIndexes` is internal) | DI `IMongoClient` | `ProductCatalog.Infrastructure/Data/` |
 | Basket use cases | `GetBasket` (query), `StoreBasket` (command, replaces the whole basket), `DeleteBasket` (command); responses are DTOs | handlers in `Basket.Application/Handlers/<UseCase>Handler/`, exposed by `BasketController` | `IBasketRepository`, `BasketMapper` | `Basket.Application/Handlers/`, `Basket.API/Controllers/BasketController.cs` |
 | Basket persistence | PostgreSQL row per user (items in `jsonb`), wrapped by a Redis cache-aside decorator; handlers only see the Domain port `IBasketRepository` | `IBasketRepository` → `CachedBasketRepository` → `BasketRepository` | `BasketDbContext`, `IDistributedCache` | `Basket.Domain/Repositories/`, `Basket.Infrastructure/` |
+| Discount gRPC adapter | Each RPC maps the proto request → command/query, `sender.Send`, then `result.GetValueOrThrow().ToResponse()` (`RpcStatusMapper`, `DiscountProtoMapper`), or `ThrowIfFailed` when there is no value (Delete). A failed outcome is thrown as `RpcException`. No business logic | `DiscountService : DiscountProtoService.DiscountProtoServiceBase` | `ISender`, `DiscountProtoMapper`, `RpcStatusMapper` | `Discount.Grpc/Services/`, `Discount.Grpc/Mappers/` |
+| Discount use cases | `GetDiscount` (query), `CreateDiscount`, `UpdateDiscount`, `DeleteDiscount` (commands); coupon looked up / deleted by `CouponKey(ProductId, SkuCode)`, updated by `Id`; at most one coupon per `SkuCode` | handlers in `Discount.Application/Handlers/<UseCase>Handler/` | `ICouponRepository`, `CouponMapper`, `Error.NotFound`/`Error.AlreadyExists` | `Discount.Application/Handlers/` |
+| Discount persistence | PostgreSQL table `Coupons` via EF Core; schema from **migrations** applied at startup | `ICouponRepository` → `CouponRepository` | `DiscountDbContext` | `Discount.Domain/Repositories/`, `Discount.Infrastructure/` |
 
 ## E. Symbol Index
 
@@ -101,9 +117,9 @@ Project references (csproj-verified), identical shape in both services: `*.API` 
 | `AddApplication()` | DI ext | `ProductCatalog.Application/DependencyInjection.cs` | MediatR + behaviors + validators from assembly |
 | `AddInfrastructure()` | DI ext | `ProductCatalog.Infrastructure/DependencyInjection.cs` | `IMongoClient` (singleton), UoW/repo (scoped), clock, `mongodb` health check (`AddMongoDb`, same client + `DatabaseName`) |
 | `AddDefaultPipelineBehaviors()` | Ext | `Infrastructure/Abstractions/Behaviors/MediatRConfigurationExtensions.cs` | Registers Logging → Validation (order matters) |
-| `ValidationBehavior<,>` | Pipeline | `Infrastructure/Abstractions/Behaviors/ValidationBehavior.cs` | Commands only (`IBaseCommand`; `TResponse : ValidationOutcome, new()`); on failure **returns** `new TResponse { ValidationMessages = ... }` (handler not called) → 200 `isSuccessful: false`. Error code = FluentValidation `ErrorCode` ?? property name |
+| `ValidationBehavior<,>` | Pipeline | `Infrastructure/Abstractions/Behaviors/ValidationBehavior.cs` | Commands only (`IBaseCommand`; `TResponse : ValidationOutcome, new()`); on failure **returns** `new TResponse { ValidationMessages = ... }` (handler not called) → 200 `isSuccessful: false`. Error code = the failing property path (`ValidationFailure.PropertyName`, e.g. `Key.SkuCode`) |
 | `LoggingBehavior<,>` | Pipeline | `Infrastructure/Abstractions/Behaviors/LoggingBehavior.cs` | Logs start/success; failed outcomes at Warning with `ValidationMessages`; exceptions at Error and rethrows |
-| `ValidationOutcome`, `Validation<T>`, `ValidationMessages`, `Error` | Types | `Infrastructure/Errors/` | `IsSuccessful` = no `ValidationMessages`; `Validation<T>.Value` (`null` on failure); `ValidationMessages` holds `Error`s but serializes only `messages` (strings, codes are not sent); `Error(Code, Message)` with `Error.NullValue/NotFound/OptimisticLocking`; implicit `Error` → failed outcome and `TValue` → `Validation<T>` (a `null` value becomes `Error.NullValue`). All public properties are the 200 JSON body |
+| `ValidationOutcome`, `Validation<T>`, `ValidationMessages`, `Error` | Types | `Infrastructure/Errors/` | `IsSuccessful` = no `ValidationMessages`; `Validation<T>.Value` (`null` on failure); `ValidationMessages` holds `Error`s but serializes only `messages` (strings, codes are not sent); `Error(Code, Message)` with `Error.NullValue/NotFound/AlreadyExists/OptimisticLocking` (for validator failures `Code` is the property path); `ValidationMessages.Errors` exposes the `Error`s (with codes) to code such as `RpcStatusMapper` and is `[JsonIgnore]`, so the body is unchanged; implicit `Error` → failed outcome and `TValue` → `Validation<T>` (a `null` value becomes `Error.NullValue`). All public properties are the 200 JSON body |
 | `TransactionalCommandHandler<,>` | Abstract class | `ProductCatalog.Application/Handlers/Base/TransactionalCommandHandler.cs` | Tx template; override `ExecuteAsync` |
 | `CreateProductCommandHandler` | Handler | `ProductCatalog.Application/Handlers/CreateProductCommandHandler/` | Validate refs + SKU codes, insert SPU then SKUs |
 | `UpdateProductCommandHandler` | Handler | `ProductCatalog.Application/Handlers/UpdateProductCommandHandler/` | Replace SPU; diff SKUs by `SkuCode` |
@@ -140,6 +156,21 @@ Project references (csproj-verified), identical shape in both services: `*.API` 
 | `CachedBasketRepository` | Decorator | `Basket.Infrastructure/Repositories/CachedBasketRepository.cs` | Cache-aside: read → Redis, miss → DB + cache (30 min sliding); store/delete → DB, then remove the cache key |
 | `BasketDbContext` | DbContext | `Basket.Infrastructure/Data/BasketDbContext.cs` | `ShoppingCarts` table, PK `UserName`, `Items` owned collection `ToJson()` → `jsonb` |
 | `AddInfrastructure` (Basket) / `DatabaseInitializer.InitializeAsync` | DI ext / static | `Basket.Infrastructure/DependencyInjection.cs`, `Basket.Infrastructure/Data/DatabaseInitializer.cs` | DbContext, Redis cache (`InstanceName` `basket:`), decorator wiring, `npgsql` + `redis` health checks; `EnsureCreatedAsync` at startup |
+| `discount.proto` (`DiscountProtoService`) | gRPC contract | `Discount.Grpc/Protos/discount.proto` | `csharp_namespace` `Discount.Grpc`, package `discount`. RPCs `GetDiscount`/`CreateDiscount`/`UpdateDiscount` → `CouponResponse { id, product_id, sku_code, description, amount }` (the coupon itself, no envelope), `DeleteDiscount` → `DeleteDiscountResponse { success }` (always `true` when returned; failures are status codes). Get/Delete requests = `product_id` + `sku_code`. Errors = gRPC status codes with the message(s) as detail. Money = `DecimalValue { units, nanos }` (protobuf has no decimal) |
+| `DiscountService` | gRPC service | `Discount.Grpc/Services/DiscountService.cs` | Thin adapter over `ISender` (primary constructor), mapped by `MapGrpcService<DiscountService>()` |
+| `DiscountProtoMapper` | Ext methods | `Discount.Grpc/Mappers/DiscountProtoMapper.cs` | Proto request → query/command, `CouponDto` → `CouponResponse`, `DecimalValue` ↔ `decimal` (missing amount → 0, rejected by validators) |
+| `RpcStatusMapper.ThrowIfFailed` / `GetValueOrThrow` | Ext methods | `Discount.Grpc/Mappers/RpcStatusMapper.cs` | `GetValueOrThrow` (for `Validation<T>`) = `ThrowIfFailed` + return `Value`; `ThrowIfFailed` alone for plain `ValidationOutcome` (Delete). Failed outcome → `RpcException`: any `Error.NotFound` code → `NotFound`, `Error.AlreadyExists` → `AlreadyExists`, anything else (validator failures) → `InvalidArgument`; status message = messages joined. Rich details via `Grpc.StatusProto` (`grpc-status-details-bin`): `google.rpc.BadRequest` with one `FieldViolation` per validator error, i.e. any code not in its business-code table (field = last segment of the `Code` property path in snake_case, e.g. `Key.SkuCode` → `sku_code`), and `google.rpc.ErrorInfo` for the first business error (reason = `Error.Code`, domain `discount`). Clients read them with `RpcException.GetRpcStatus()?.GetDetail<BadRequest>()` |
+| `Coupon` | Entity | `Discount.Domain/Entities/Coupon.cs` | `Id` (int identity, the only PK), `ProductId` (ProductCatalog product id, reference only), `SkuCode` (unique, ProductCatalog SKU code; neither is checked against ProductCatalog), `Description`, `Amount` (fixed amount off the unit price, `numeric(18,2)`) |
+| `ICouponRepository` / `CouponRepository` | Port / repository | `Discount.Domain/Repositories/ICouponRepository.cs`, `Discount.Infrastructure/Repositories/CouponRepository.cs` | `GetAsync(CouponKey)` (no-tracking, match on both; served by the unique `SkuCode` index; also the duplicate check for create/update), `AddAsync`, `UpdateAsync` (`ExecuteUpdateAsync` by `Id`, bool), `DeleteAsync(CouponKey)` (`ExecuteDeleteAsync`, bool) |
+| `CouponKey` | Record (value object) | `Discount.Domain/ValueObjects/CouponKey.cs` | `(ProductId, SkuCode)` — how clients address a coupon (Get/Delete query/command `Key`, repository lookups). Not the PK and not the uniqueness rule (`Id` is the PK; `SkuCode` is unique). Built from the proto request in `DiscountProtoMapper` |
+| `GetDiscountQuery` / `GetDiscountQueryHandler` | Query + handler | `Discount.Application/Handlers/GetDiscountQueryHandler/` | `GetDiscountQuery(CouponKey Key)`; `CouponDto` or `Error.NotFound` (queries are not validated: an empty key is just not found) |
+| `CreateDiscountCommand` / `CreateDiscountCommandHandler` | Command + handler | `Discount.Application/Handlers/CreateDiscountCommandHandler/` | `Error.AlreadyExists with { Message = ServerMessages.CouponAlreadyExists }` when a coupon with the same key exists, else insert → `CouponDto` |
+| `UpdateDiscountCommand` / `UpdateDiscountCommandHandler` | Command + handler | `Discount.Application/Handlers/UpdateDiscountCommandHandler/` | SKU code may change, but not to another coupon's (`Error.AlreadyExists`); `Error.NotFound` for an unknown `Id` |
+| `DeleteDiscountCommand` / `DeleteDiscountCommandHandler` | Command + handler | `Discount.Application/Handlers/DeleteDiscountCommandHandler/` | `DeleteDiscountCommand(CouponKey Key)`; `Error.NotFound` when nothing matches the key |
+| `Create/Update/DeleteDiscountCommandValidator`, `CouponKeyValidator` | Validators | `Discount.Application/Validators/` | `ProductId`/`SkuCode`/`Description` not empty, `Amount` > 0, `Id` > 0 (update); Delete = `RuleFor(x => x.Key).NotNull().SetValidator(new CouponKeyValidator())` (messages keep the child names, e.g. `'Product Id' must not be empty.`) |
+| `CouponDto`, `CouponMapper` | DTO / ext method | `Discount.Application/DTOs/CouponDto.cs`, `Discount.Application/Mappers/CouponMapper.cs` | `Coupon.ToDto()` |
+| `DiscountDbContext`, `CouponConfiguration` | DbContext / `IEntityTypeConfiguration` | `Discount.Infrastructure/Data/DiscountDbContext.cs`, `Discount.Infrastructure/Data/Configurations/CouponConfiguration.cs` | `ApplyConfigurationsFromAssembly`; PK `Id`, unique index `IX_Coupons_SkuCode`, `Amount` precision (18,2) |
+| `AddInfrastructure` (Discount) / `DatabaseInitializer.InitializeAsync` / `DiscountSeedData` | DI ext / static / static | `Discount.Infrastructure/DependencyInjection.cs`, `Discount.Infrastructure/Data/` | DbContext, `ICouponRepository` (scoped), `npgsql` health check; startup `MigrateAsync`, then `DiscountSeedData.CreateCoupons()` only when no migration had been applied before (new database) |
 
 ## F. Dependency Index
 
@@ -161,9 +192,16 @@ BasketController -> ISender -> LoggingBehavior -> ValidationBehavior (commands o
   -> IBasketRepository => CachedBasketRepository (scoped) -> IDistributedCache (Redis)
                                                     -> BasketRepository (scoped) -> BasketDbContext (Npgsql)
 Program.cs -> DatabaseInitializer.InitializeAsync -> BasketDbContext.Database.EnsureCreatedAsync
+
+Discount (same layering, gRPC instead of a controller):
+DiscountService -> DiscountProtoMapper.ToQuery/ToCommand -> ISender -> LoggingBehavior -> ValidationBehavior (commands only)
+  -> <UseCase>Handler -> ICouponRepository => CouponRepository (scoped) -> DiscountDbContext (Npgsql)
+  <- outcome -> RpcStatusMapper.GetValueOrThrow -> DiscountProtoMapper.ToResponse -> CouponResponse
+              | RpcStatusMapper.ThrowIfFailed -> DeleteDiscountResponse   (failures: RpcException)
+Program.cs -> DatabaseInitializer.InitializeAsync -> Database.MigrateAsync (+ DiscountSeedData on a new database)
 ```
 
-Shared dependencies: `ValidationOutcome`/`Error` (all handlers of both services, `ProductController`, `BasketController`, `LoggingBehavior`, `ValidationBehavior`); `DatabaseSettings` (repository, indexes, seeder, `IMongoClient` factory). Circular: none.
+Shared dependencies: `ValidationOutcome`/`Error` (all handlers of all services, `ProductController`, `BasketController`, `DiscountProtoMapper`, `LoggingBehavior`, `ValidationBehavior`); `DatabaseSettings` (repository, indexes, seeder, `IMongoClient` factory). Circular: none.
 
 ## G. Data Architecture Index
 
@@ -195,6 +233,7 @@ erDiagram
 - **Migrations:** none (schemaless). **Caching:** none.
 - **Seed:** `CatalogSeedData` (in code, no JSON). `DatabaseInitializer` runs only when `DatabaseName` is missing from `ListDatabaseNames` (MongoDB creates a database on its first write): `DatabaseSeeder` first (brands and types inserted directly; products + SKUs in one `WithTransactionAsync`), then indexes. A failure after brands are inserted leaves the database existing but partly seeded, and later starts skip it — drop `CatalogDb` to re-run. Index or seed changes reach only new databases. All 8 sample iPhones use `AppleBrandId` + `SmartphoneTypeId`.
 - **Basket (PostgreSQL `BasketDb`):** table `ShoppingCarts` (`UserName` text PK, `Items` jsonb) from `BasketDbContext`. Created by `EnsureCreatedAsync` on startup when the database or its tables are missing; **no EF migrations** — a model change needs the table dropped (or a switch to migrations). Store = full replace of `Items`.
+- **Discount (PostgreSQL `DiscountDb`):** table `Coupons` (`Id` integer identity PK, `ProductId` text (reference, not a key, no index), `SkuCode` text unique, `Description` text, `Amount` numeric(18,2)) from `CouponConfiguration`. **EF Core migrations** in `Discount.Infrastructure/Migrations/` (`InitialCreate`, `AddProductIdToCoupon` — adds the column with `""` for existing rows and backfills the two seed SKUs), applied by `MigrateAsync` at startup. Seed: `DiscountSeedData` (2 coupons for ProductCatalog SKUs `IPHONE-X-SG-64`, `IPHONE-17-BK-256`) inserted only when the database had no applied migration; ids come from the identity column, so later inserts never collide. No caching.
 - **Basket cache (Redis):** key `basket:<userName>` (`InstanceName` + user name), value = `ShoppingCart` as System.Text.Json, 30-minute sliding expiration. Written only on a read miss; removed after every store/delete. Database is the source of truth.
 - **DTOs:** requests `CreateProductRequest`, `UpdateProductRequest`, `ProductSkuRequest`; responses `ProductSpuDto`(+`VariantOptionDto`), `ProductSkuDto`(+`SkuAttributeDto`), `ProductBrandDto`, `ProductTypeDto`, `ProductDetailsDto` — all in `ProductCatalog.Application/DTOs/`. Requests embed domain types `VariantOption`/`SkuAttribute` directly.
 
@@ -238,6 +277,10 @@ sequenceDiagram
 | Store basket | `PUT /basket/{userName}` → `StoreBasketRequest.Adapt<StoreBasketCommand>() with { UserName }` | validator → items `ToEntity` → `BasketRepository.StoreBasketAsync` (insert, or replace `Items` of the tracked row) → remove Redis key → `ToDto` | Stored basket |
 | Delete basket | `DELETE /basket/{userName}` | `ExecuteDeleteAsync` → remove Redis key | `isSuccessful: true`, no value; `Error.NotFound` if nothing deleted |
 | Basket startup | `Basket.API/Program.cs` | `DatabaseInitializer.InitializeAsync` (`EnsureCreatedAsync`; skipped under the Swashbuckle CLI) → Swagger (Development) → `UseHttpsRedirection` → `UseSerilogRequestLogging` → `UseExceptionHandler` → `MapControllers` → `MapHealthChecks("/health")` | Table created on first run; unreachable PostgreSQL fails startup |
+| Get discount | `GetDiscount` RPC → `request.ToQuery()` (`product_id`, `sku_code`) | `CouponRepository.GetAsync` (no-tracking) → `ToDto` → `GetValueOrThrow` → `ToResponse` | `CouponResponse`; status `NotFound` if no coupon matches both |
+| Create / update discount | `CreateDiscount` / `UpdateDiscount` RPC → `request.ToCommand()` | validator → duplicate check `GetAsync(new CouponKey(ProductId, SkuCode))` (update: a hit with another `Id`) → `AddAsync` (`SaveChanges`) / `UpdateAsync` (`ExecuteUpdateAsync`; 0 rows = `Error.NotFound`) | `CouponResponse` with the stored coupon; `InvalidArgument` / `AlreadyExists` / `NotFound` statuses |
+| Delete discount | `DeleteDiscount` RPC | validator → `ExecuteDeleteAsync` by `ProductId` + `SkuCode` | `DeleteDiscountResponse { success: true }`; status `NotFound` if nothing deleted, `InvalidArgument` for invalid input |
+| Discount startup | `Discount.Grpc/Program.cs` | `DatabaseInitializer.InitializeAsync` (`MigrateAsync`, seed if new) → `UseSerilogRequestLogging` → `MapGrpcService<DiscountService>` → `MapGrpcReflectionService` (Development) → `MapHealthChecks("/health")` | Unreachable PostgreSQL fails startup. On a new database EF logs one or two `Failed executing DbCommand … __EFMigrationsHistory` errors (history table not created yet) — expected |
 
 ## I. API & Integration Index
 
@@ -254,9 +297,19 @@ sequenceDiagram
 | DELETE | `/basket/{userName}` | `DeleteBasketCommandHandler` | no value; failure: validator messages, not found | 500 |
 | GET | `/health` (Basket) | `MapHealthChecks` in `Basket.API/Program.cs` | 200 with `npgsql` and `redis` entries | 503 when either is unreachable |
 
-- Happy-path samples: `ProductCatalog.API/http/catalog.http`, `Basket.API/http/basket.http`. Actions declare **no** `[ProducesResponseType]`: `ProductController` and `BasketController` each have a class-level untyped 200 (the return type documents it) and the 500 `ProblemDetails`. After changing a ProductCatalog endpoint run `pnpm gen:openapi && pnpm gen:api` in `../client-app` (regenerates `openapi/bff.json` + TS types; both `Program.cs` files skip database initialization when loaded by the Swashbuckle CLI).
+**Discount gRPC** (`discount.DiscountProtoService`, HTTP/2; Docker `discount.grpc:8080` plaintext / `8081` TLS):
+
+| RPC | Request | Handler | Response | Error status (detail = message(s)) |
+|---|---|---|---|---|
+| `GetDiscount` | `product_id`, `sku_code` | `GetDiscountQueryHandler` | `CouponResponse` | `NotFound`; `Unknown` for unexpected exceptions (all RPCs) |
+| `CreateDiscount` | `product_id`, `sku_code`, `description`, `amount` | `CreateDiscountCommandHandler` | `CouponResponse` | `InvalidArgument` (validators), `AlreadyExists` (SKU already has a coupon) |
+| `UpdateDiscount` | `id`, `product_id`, `sku_code`, `description`, `amount` | `UpdateDiscountCommandHandler` | `CouponResponse` | `InvalidArgument`, `AlreadyExists` (SKU taken by another coupon), `NotFound` (unknown `id`) |
+| `DeleteDiscount` | `product_id`, `sku_code` | `DeleteDiscountCommandHandler` | `DeleteDiscountResponse { success: true }` | `InvalidArgument`, `NotFound` |
+| (HTTP) GET `/health` | — | `MapHealthChecks` in `Discount.Grpc/Program.cs` | 200 with an `npgsql` entry (HTTP/2 only: use HTTPS in a browser, or an HTTP/2 client) | 503 |
+
+- Happy-path samples: `ProductCatalog.API/http/catalog.http`, `Basket.API/http/basket.http`. Discount has no `.http` file: use `grpcurl` or Postman with server reflection (Development), e.g. `grpcurl -plaintext -d '{"product_id":"019a7e00-0000-7000-8000-000000000301","sku_code":"IPHONE-X-SG-64"}' localhost:6002 discount.DiscountProtoService/GetDiscount`. Actions declare **no** `[ProducesResponseType]`: `ProductController` and `BasketController` each have a class-level untyped 200 (the return type documents it) and the 500 `ProblemDetails`. After changing a ProductCatalog endpoint run `pnpm gen:openapi && pnpm gen:api` in `../client-app` (regenerates `openapi/bff.json` + TS types; both `Program.cs` files skip database initialization when loaded by the Swashbuckle CLI).
 - Swagger UI: `/swagger` (Development only). Swashbuckle CLI (`swagger`) pinned as a local tool in `dotnet-tools.json`.
-- External systems: MongoDB (ProductCatalog), PostgreSQL + Redis (Basket). Logs go to console and local files.
+- External systems: MongoDB (ProductCatalog), PostgreSQL + Redis (Basket), PostgreSQL (Discount). Logs go to console and local files.
 - Webhooks, background jobs, message queues, domain events: **none**.
 - Auth: `UseAuthentication`/`UseAuthorization` commented out in `Program.cs`; all endpoints anonymous.
 
@@ -272,11 +325,15 @@ sequenceDiagram
 | `Serilog:WriteTo:File:Args:path` | Daily rolling file `C:\Logs\App\ProductCatalog-yyyyMMdd.log` (`rollingInterval: Day`, Serilog default 31-file retention) | `ProductCatalog.API/appsettings.json` | same |
 | `ASPNETCORE_ENVIRONMENT` | `Development` enables Swagger | `docker-compose.override.yml`, `ProductCatalog.API/Properties/launchSettings.json` | `Program.cs` |
 | Ports | local `http://localhost:5000` / `https://localhost:5050`; Docker API `6000→8080` (HTTP), `6060→8081` (HTTPS) via `ASPNETCORE_HTTP_PORTS`/`ASPNETCORE_HTTPS_PORTS`; Mongo `27017` | `ProductCatalog.API/Properties/launchSettings.json`, `docker-compose.override.yml` | — |
-| `UserSecretsId` | User secrets, mounted read-only into container | `ProductCatalog.API/ProductCatalog.API.csproj`, `Basket.API/Basket.API.csproj`, `docker-compose.override.yml` | (contents not in repo) |
+| `UserSecretsId` | User secrets, mounted read-only into container | `ProductCatalog.API/ProductCatalog.API.csproj`, `Basket.API/Basket.API.csproj`, `Discount.Grpc/Discount.Grpc.csproj`, `docker-compose.override.yml` | (contents not in repo) |
 | `ConnectionStrings:Database` | Basket PostgreSQL (local dev credentials `postgres`/`postgres`) | `Basket.API/appsettings.json`; env `ConnectionStrings__Database` (host `basketdb`) in `docker-compose.override.yml` | `AddInfrastructure` (Basket) (DbContext + `npgsql` health check) |
 | `ConnectionStrings:Redis` | Basket Redis | `Basket.API/appsettings.json`; env `ConnectionStrings__Redis` (`distributedcache:6379`) | `AddInfrastructure` (Basket) (cache + `redis` health check) |
 | Basket `Serilog` | Same layout as ProductCatalog; file `C:\Logs\App\Basket-yyyyMMdd.log`; `Microsoft.EntityFrameworkCore` = Warning | `Basket.API/appsettings.json` | `Basket.API/Program.cs` |
 | Basket ports | local `http://localhost:5001` / `https://localhost:5051`; Docker `6001→8080`, `6061→8081`; PostgreSQL `5432`; Redis `6379` | `Basket.API/Properties/launchSettings.json`, `docker-compose.override.yml` | — |
+| Discount `ConnectionStrings:Database` | Discount PostgreSQL (`DiscountDb`, local dev credentials `postgres`/`postgres`) | `Discount.Grpc/appsettings.json` (`localhost:5433`); env `ConnectionStrings__Database` (host `discountdb`) in `docker-compose.override.yml` | `AddInfrastructure` (Discount) (DbContext + `npgsql` health check); `dotnet ef` design time |
+| `Kestrel:EndpointDefaults:Protocols` = `Http2` | gRPC over plaintext HTTP needs HTTP/2-only endpoints (h2c); also applies to `/health` | `Discount.Grpc/appsettings.json` | Kestrel |
+| Discount `Serilog` | Same layout; file `C:\Logs\App\Discount-yyyyMMdd.log` | `Discount.Grpc/appsettings.json` | `Discount.Grpc/Program.cs` |
+| Discount ports | local `http://localhost:5002` / `https://localhost:5052`; Docker `6002→8080`, `6062→8081`; PostgreSQL `5433→5432` | `Discount.Grpc/Properties/launchSettings.json`, `docker-compose.override.yml` | — |
 | `DOCKER_REGISTRY` | Image name prefix | `docker-compose.yml` | Compose |
 
 `WriteTo` is an object keyed by sink name (not an array), so files and env vars override a sink by name.
@@ -291,7 +348,8 @@ sequenceDiagram
 6. **Error contract (both services) — the developer decides per situation:**
     - **Expected** (business rule, validator failure, a lookup that may find nothing, `no access`) → return an `Error` (aborts the tx) or let `ValidationBehavior` return the validator messages. Endpoints return the outcome as-is: **HTTP 200**, `isSuccessful: false`, `validationMessages.messages` — clients check `isSuccessful`, never the status. Use `Error.NotFound` for `no access` too. Define errors per K13. Never throw for these.
     - **Unexpected** → throw (or let it bubble). `GlobalExceptionHandler`: 500 `ProblemDetails` with a generic message, details only logged. `OptimisticLockingException` is the one exception that becomes a user message (200, `Error.OptimisticLocking`).
-    - Controllers/endpoints never build status-code results (`Ok`, `NotFound`, `Problem`, `NoContent`, `IActionResult`): they return `Task<Validation<T>>` / `Task<ValidationOutcome>`. Every service calls `AddGlobalExceptionHandler()` + `app.UseExceptionHandler()`.
+    - Controllers/endpoints never build status-code results (`Ok`, `NotFound`, `Problem`, `NoContent`, `IActionResult`): they return `Task<Validation<T>>` / `Task<ValidationOutcome>`. Every HTTP API calls `AddGlobalExceptionHandler()` + `app.UseExceptionHandler()`.
+    - **gRPC (Discount) follows gRPC status conventions instead of the 200 envelope:** handlers still return `Error` outcomes (never throw, never reference Grpc types); only `RpcStatusMapper.ThrowIfFailed` in `Discount.Grpc` turns a failed outcome into `RpcException` (`NotFound` / `AlreadyExists` / `InvalidArgument`) with standard rich error details (`google.rpc.BadRequest` field violations, `google.rpc.ErrorInfo` error code). A new error kind needs a shared `Error` code and an entry in `RpcStatusMapper.BusinessStatusCodes` (otherwise it is treated as a validator error: `InvalidArgument` + a field violation). Unexpected exceptions are turned into status `Unknown` (generic message) by Grpc.AspNetCore and logged by `LoggingBehavior`; `GlobalExceptionHandler` is not involved (gRPC handles exceptions before the middleware).
 7. **Validation scope:** `ValidationBehavior` applies only to `IBaseCommand`; queries are not validated. Validators are auto-discovered from the Application assembly (internal types included). It calls `Validate` synchronously, so async rules (`MustAsync`) would throw — checks that need the database belong in handlers (as the brand/category/SKU-code checks do). Entity factories (`ProductSpu.Create/Update`) throw `ArgumentException` (→ 500) for missing name/brand/category, so validators must reject that input first.
 8. **SKU invariants:** `SkuCode` globally unique — handlers check first and return `ProductErrors.SkuCodeConflict` (200 failure); the unique index enforces it under concurrency (a request that loses that race gets 500, since duplicate-key errors are not translated); unique within a product; one attribute per variant option with an allowed value; unique attribute combinations (`VariantKeyBuilder`). Update matches SKUs by `SkuCode`; SKUs omitted from PUT are deleted.
 9. **Immutables:** `ProductSpu.ProductCode`, `ProductSku.SpuId`, `ProductSku.SkuCode`. `ProductCode` uniqueness is not enforced anywhere.
@@ -299,6 +357,7 @@ sequenceDiagram
 11. **Pipeline order:** Logging wraps Validation (`AddDefaultPipelineBehaviors`).
 12. **Seed ids are referenced by `catalog.http`:** keep `CatalogSeedData` id constants and the file in sync.
 13. **Error definition conventions** (follow for every new error, e.g. `ProductErrors`):
+    - A generic shared error (`Error.NotFound`, `Error.AlreadyExists`) needs no service-specific class: return it directly, or `Error.AlreadyExists with { Message = ... }` (message from `ServerMessages`) when the client needs a specific message — the code, which callers and `RpcStatusMapper` match on, stays the same. Discount uses only these, so it has no `DiscountErrors`.
     - Code as a `public const string XxxCode = "<Area>.<Name>"` — match on the constant, never on a string literal.
     - Fixed error → `public static readonly Error Xxx = new(XxxCode, ServerMessages.Xxx);` (never a mutable `static` field, never a property that allocates per call).
     - Error whose message needs input → a static method `Xxx(args)` that formats the `ServerMessages` text with `CultureInfo.CurrentCulture`.
@@ -308,14 +367,21 @@ sequenceDiagram
 15. **Basket cache-aside order:** every write path must change the database **first**, then remove the Redis key (never write the cache from a write path). New repository methods go into `IBasketRepository` and **both** `BasketRepository` and `CachedBasketRepository`; handlers depend only on `IBasketRepository` (the decorator is wired by hand in `AddInfrastructure` (`Basket.Infrastructure/DependencyInjection.cs`)). A failed Redis call fails the request (no fallback to the database); a removal that fails after the database write leaves a stale entry until it expires.
 16. **`ShoppingCart` is three contracts at once:** API JSON (camelCase), EF entity (`jsonb` column) and cache JSON (System.Text.Json defaults). Changing its shape affects all three; cached entries with the old shape live up to 30 minutes, and the table needs recreating (no migrations).
 17. **Shared library depends on ASP.NET Core:** `Infrastructure/` has a `Microsoft.AspNetCore.App` framework reference for `Exceptions/`, so ProductCatalog.Application (which references it) can see web types. Keep HTTP types inside `Infrastructure/Exceptions/` and out of Application/Domain code.
+18. **Discount follows the same layering, gRPC at the edge:** a new use case = `Discount.Application/Handlers/<UseCase>Handler/` + validator + an RPC in `discount.proto` + an override in `DiscountService` + mapping in `DiscountProtoMapper`. Generated proto types (`Discount.Grpc` namespace) stay in `Discount.Grpc`: Application never references them.
+19. **`discount.proto` is a wire contract:** never renumber or reuse field numbers; add fields with new numbers. Money uses `DecimalValue` (never `double`). The contract was renumbered once before any client existed (2026-11-25); from now on append only. Clients that will consume it (e.g. Basket) need the same `.proto` with `GrpcServices="Client"`.
+20. **Discount schema changes need a migration:** change `Coupon`/`CouponConfiguration`, then add a migration (`dotnet ef migrations add <Name> --project Services/Discount/Discount.Infrastructure --startup-project Services/Discount/Discount.Grpc`); startup applies it. Do not edit applied migrations. Seed changes in `DiscountSeedData` reach only new databases. One coupon per `SkuCode`: handlers check the **key** first (`GetAsync(CouponKey)` → `AlreadyExists`); the unique `SkuCode` index is the real guard. A request with an existing SKU under a **different** product id passes the check and is rejected by the index → status `Unknown` (a client sending a wrong product id is treated as unexpected), as is the loser of a concurrent insert (K8).
 
 | Change Area | Likely Impact |
 |---|---|
 | `ProductSpu`/`ProductSku`/`VariantOption`/`SkuAttribute` fields | Stored docs (no migrations), request DTOs + commands (Mapster names), `ProductCatalogMapper` + response DTOs, `ProductCommandValidator`, `CatalogSeedData` |
 | `IProductCatalogRepository` | `ProductCatalogRepository`, all 5 handlers |
 | `TransactionalCommandHandler` / `MongoUnitOfWork` / `IMongoSessionAccessor` | All command handlers, repository write path & `Find<T>` session join |
-| Shared `Infrastructure/` (`Errors/`, behaviors, `Exceptions/`) | **Both services**: `LoggingBehavior`, all handlers, every endpoint`s response |
-| `ValidationOutcome` / `Validation<T>` / `ValidationMessages` public properties | 200 body of every endpoint of both services (client contract; `../client-app` generated types): renaming or adding a public property changes every response |
+| Shared `Infrastructure/` (`Errors/`, behaviors, `Exceptions/`) | **All services**: `LoggingBehavior`, all handlers, every endpoint's response, `DiscountProtoMapper` |
+| `ValidationOutcome` / `Validation<T>` / `ValidationMessages` public properties | 200 body of every HTTP endpoint (client contract; `../client-app` generated types): renaming or adding a public property changes every response (`ValidationMessages.Errors` is `[JsonIgnore]` on purpose). Shared `Error` codes drive Discount's gRPC status codes (`RpcStatusMapper`) |
+| `discount.proto` | Generated server types, `DiscountService`, `DiscountProtoMapper`, every gRPC client (K19) |
+| `Error.NotFound` / `Error.AlreadyExists` codes | Discount gRPC status codes via `RpcStatusMapper` |
+| `Coupon` / `CouponConfiguration` | New EF migration (K20), `CouponMapper` + `CouponDto`, `discount.proto` `CouponResponse`, validators, `DiscountSeedData` |
+| `ICouponRepository` | `CouponRepository`, all 4 Discount handlers |
 | `ValidationBehavior` / `GlobalExceptionHandler` | Validation failures (200) and every non-200 response of both services |
 | `ShoppingCart` / `ShoppingCartItem` (entities) | `jsonb` column (recreate table), Redis payload, `BasketMapper` + DTOs (API JSON), `StoreBasketCommandValidator`, `basket.http` |
 | `IBasketRepository` | `BasketRepository`, `CachedBasketRepository`, all 3 Basket handlers |
@@ -344,16 +410,21 @@ dotnet run --project Services/Basket/Basket.API
 ```
 
 ```bash
+dotnet run --project Services/Discount/Discount.Grpc
+```
+
+```bash
 docker compose up --build
 ```
 
 - `dotnet run` against the Compose MongoDB needs `mongodb://localhost:27017/?directConnection=true`: the replica-set member is named `catalogdb:27017`, which the host cannot resolve. Docker Compose exposes ProductCatalog on `http://localhost:6000` / `https://localhost:6060` (Chrome/Edge block port 6000) and Basket on `http://localhost:6001` / `https://localhost:6061`; `docker-compose.override.yml` mounts `${APPDATA}` paths (Windows host).
 - Basket `dotnet run` uses the default `appsettings.json` connection strings, which match the Compose `basketdb` (`localhost:5432`) and `distributedcache` (`localhost:6379`). In `docker-compose.override.yml`, `basket.api` depends on both (start order only, no healthcheck), and PostgreSQL data lives in volume `postgres_basket` mounted at `/var/lib/postgresql` (postgres 18+ layout; mounting `/var/lib/postgresql/data` makes the container refuse to start).
+- Discount `dotnet run` uses `appsettings.json` (`localhost:5433`), which matches the Compose `discountdb`; `discount.grpc` depends on it (start order only) and its data lives in volume `postgres_discount` at `/var/lib/postgresql`. Docker exposes gRPC on `localhost:6002` (plaintext h2c) / `6062` (TLS). EF migrations need `dotnet-ef` (not in `dotnet-tools.json`); `Discount.Grpc` references `Microsoft.EntityFrameworkCore.Design` as the startup project.
 - Npgsql logs `Cannot load library libgssapi_krb5.so.2` in the `aspnet` container: Kerberos support is absent, harmless with password auth.
 - Startup seeds and indexes only a missing `CatalogDb`. A database created before `SkuCode` became unique silently keeps the old non-unique `SkuCode_1` index — drop it once (`docker compose down -v` deletes the `mongo_data` volume; the healthcheck re-initiates the replica set).
 - Log file path `C:\Logs\App\…` is a Windows path; Docker/Linux logging setup is still to be decided.
-- Docker images: multi-stage `ProductCatalog.API/Dockerfile`, `Basket.API/Dockerfile` (build context = repo root). VS integration: `docker-compose.dcproj`, root `launchSettings.json` (debugs both APIs).
-- Tests and CI: **not set up yet** (planned). Lint/format: SDK defaults only, by choice. Manual testing: `catalog.http`, `basket.http`.
+- Docker images: multi-stage `ProductCatalog.API/Dockerfile`, `Basket.API/Dockerfile`, `Discount.Grpc/Dockerfile` (build context = repo root). VS integration: `docker-compose.dcproj`, root `launchSettings.json` (debugs all three services).
+- Tests and CI: **not set up yet** (planned). Lint/format: SDK defaults only, by choice. Manual testing: `catalog.http`, `basket.http`, `grpcurl` for Discount.
 
 ## M. AI Navigation Guide
 
@@ -374,8 +445,11 @@ docker compose up --build
 | Add a Basket feature | `Basket.Application/Handlers/<UseCase>Handler/` (copy `StoreBasketCommandHandler/` for a command, `GetBasketQueryHandler/` for a query) + validator in `Basket.Application/Validators/` + action in `Basket.API/Controllers/BasketController.cs`; K14 |
 | Change Basket storage or caching | `Basket.Domain/Repositories/IBasketRepository.cs` → `Basket.Infrastructure/Repositories/BasketRepository.cs` + `CachedBasketRepository.cs` (K15); schema in `Basket.Infrastructure/Data/BasketDbContext.cs` |
 | Change Basket wiring/config | `Basket.Infrastructure/DependencyInjection.cs`, `Basket.Application/DependencyInjection.cs`, `Basket.API/Program.cs`, `Basket.API/appsettings.json`, `docker-compose.override.yml` |
-| Add a new microservice | Mirror the 4-project layout of `Services/ProductCatalog/` or `Services/Basket/`; reference shared `Infrastructure/` and call `AddGlobalExceptionHandler()` + `app.UseExceptionHandler()` (K6); add to `ShopeeMicroservices.slnx`, `docker-compose*.yml` and root `launchSettings.json` |
+| Add a Discount RPC | `Discount.Grpc/Protos/discount.proto` (K19) → handler folder in `Discount.Application/Handlers/` + validator → override in `Discount.Grpc/Services/DiscountService.cs` → mapping in `Discount.Grpc/Mappers/DiscountProtoMapper.cs`; return `result.GetValueOrThrow().ToResponse()`, or `ThrowIfFailed` when there is no value (K6); K18 |
+| Change the Discount schema | `Discount.Domain/Entities/Coupon.cs`, `Discount.Infrastructure/Data/Configurations/CouponConfiguration.cs`, then a new migration (K20) |
+| Change Discount wiring/config | `Discount.Infrastructure/DependencyInjection.cs`, `Discount.Application/DependencyInjection.cs`, `Discount.Grpc/Program.cs`, `Discount.Grpc/appsettings.json`, `docker-compose.override.yml` |
+| Add a new microservice | Mirror the 4-project layout of `Services/ProductCatalog/`, `Services/Basket/` or (gRPC) `Services/Discount/`; reference shared `Infrastructure/`; an HTTP API calls `AddGlobalExceptionHandler()` + `app.UseExceptionHandler()` (K6); add to `ShopeeMicroservices.slnx`, `docker-compose*.yml` and root `launchSettings.json` |
 
 ## N. Known Unknowns
 
-1. **Other services** — the repo name implies more microservices; ProductCatalog and Basket exist. No gateway, inter-service communication, or message bus is present (Basket prices are taken from the request, not checked against ProductCatalog).
+1. **Other services** — the repo name implies more microservices; ProductCatalog, Basket and Discount exist. No gateway, inter-service communication, or message bus is present: Basket prices are taken from the request, not checked against ProductCatalog, and Basket does not call Discount yet (no gRPC client).

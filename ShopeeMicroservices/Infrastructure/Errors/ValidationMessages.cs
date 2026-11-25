@@ -1,6 +1,7 @@
 ﻿using FluentValidation.Results;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
 namespace Infrastructure.Errors;
 
@@ -35,5 +36,9 @@ public record ValidationMessages
 
     public IReadOnlyList<string> Messages => _errors.Select(err => err.Message).ToImmutableList();
 
-    internal static Error ToError(ValidationFailure failure) => new(failure.ErrorCode ?? failure.PropertyName, failure.ErrorMessage);
+    [JsonIgnore]
+    public IReadOnlyList<Error> Errors => _errors.AsReadOnly();
+
+    internal static Error ToError(ValidationFailure failure) =>
+        new(failure.PropertyName, failure.ErrorMessage);
 }

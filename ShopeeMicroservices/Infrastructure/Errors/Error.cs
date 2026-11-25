@@ -6,6 +6,8 @@ public record Error(string Code, string Message)
 
     public static readonly Error NotFound = new("Error.NotFound", "The requested resource was not found.");
 
+    public static readonly Error AlreadyExists = new("Error.AlreadyExists", "The resource already exists.");
+
     public static readonly Error OptimisticLocking = new(
         "Error.OptimisticLocking",
         "This data was changed by someone else in the meantime. Reload it and try again.");
