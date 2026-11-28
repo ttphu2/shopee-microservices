@@ -1,4 +1,5 @@
 using Discount.Application.DTOs;
+using Discount.Application.Errors;
 using Discount.Application.Mappers;
 using Discount.Domain.Entities;
 using Discount.Domain.Repositories;
@@ -25,7 +26,7 @@ namespace Discount.Application.Handlers.UpdateDiscountCommandHandler
 
             if (!updated)
             {
-                return Error.NotFound;
+                return DiscountErrors.CouponNotFound;
             }
 
             return coupon.ToDto();

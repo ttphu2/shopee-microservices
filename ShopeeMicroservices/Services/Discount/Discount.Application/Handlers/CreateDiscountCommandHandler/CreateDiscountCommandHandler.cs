@@ -1,7 +1,6 @@
-using System.Globalization;
 using Discount.Application.DTOs;
+using Discount.Application.Errors;
 using Discount.Application.Mappers;
-using Discount.Application.Resources;
 using Discount.Domain.Entities;
 using Discount.Domain.Repositories;
 using Discount.Domain.ValueObjects;
@@ -20,10 +19,7 @@ namespace Discount.Application.Handlers.CreateDiscountCommandHandler
 
             if (existing is not null)
             {
-                return Error.AlreadyExists with
-                {
-                    Message = string.Format(CultureInfo.CurrentCulture, ServerMessages.CouponAlreadyExists, request.SkuCode)
-                };
+                return DiscountErrors.CouponAlreadyExists(request.SkuCode);
             }
 
             var coupon = await couponRepository.AddAsync(

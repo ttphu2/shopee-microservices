@@ -8,7 +8,7 @@ package discount;
 // Errors follow gRPC status codes: INVALID_ARGUMENT (validation), NOT_FOUND, ALREADY_EXISTS (SKU already has a
 // coupon), UNKNOWN (unexpected). The status message holds the message(s). Rich error details (grpc-status-details-bin)
 // carry google.rpc.BadRequest for INVALID_ARGUMENT (field = proto field name, e.g. sku_code) and google.rpc.ErrorInfo
-// for business errors (reason = error code, e.g. Error.NotFound; domain = discount).
+// for business errors (reason = error code, e.g. Discount.CouponNotFound; domain = discount).
 service DiscountProtoService {
   rpc GetDiscount (GetDiscountRequest) returns (CouponResponse);
   rpc CreateDiscount (CreateDiscountRequest) returns (CouponResponse);

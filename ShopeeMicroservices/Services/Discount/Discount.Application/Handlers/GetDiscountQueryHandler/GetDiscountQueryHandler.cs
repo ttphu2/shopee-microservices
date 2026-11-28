@@ -1,4 +1,5 @@
 using Discount.Application.DTOs;
+using Discount.Application.Errors;
 using Discount.Application.Mappers;
 using Discount.Domain.Repositories;
 using Infrastructure.Abstractions.Messaging;
@@ -15,7 +16,7 @@ namespace Discount.Application.Handlers.GetDiscountQueryHandler
 
             if (coupon is null)
             {
-                return Error.NotFound;
+                return DiscountErrors.CouponNotFound;
             }
 
             return coupon.ToDto();

@@ -9,6 +9,7 @@
 GET {{baseUrl}}/health
 
 ### Store basket (value = the basket with its totalPrice). Replaces the whole basket.
+# Each item's coupon from the Discount service is subtracted from its price (seed: IPHONE-X-SG-64 has 50 off → 749.00).
 PUT {{baseUrl}}/basket/{{userName}}
 Content-Type: application/json
 
@@ -26,6 +27,13 @@ Content-Type: application/json
       "skuCode": "IPHONE-X-SL-256",
       "productName": "iPhone X",
       "price": 899.00,
+      "quantity": 2
+    },
+    {
+      "productId": "{{productId}}",
+      "skuCode": "IPHONE-17-BK-256",
+      "productName": "iPhone 17",
+      "price": 1099.00,
       "quantity": 2
     }
   ]

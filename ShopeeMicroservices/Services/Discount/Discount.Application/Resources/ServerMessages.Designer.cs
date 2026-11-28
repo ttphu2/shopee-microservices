@@ -67,5 +67,14 @@ namespace Discount.Application.Resources {
                 return ResourceManager.GetString("CouponAlreadyExists", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The coupon was not found..
+        /// </summary>
+        internal static string CouponNotFound {
+            get {
+                return ResourceManager.GetString("CouponNotFound", resourceCulture);
+            }
+        }
     }
 }

@@ -61,4 +61,7 @@
   <data name="CouponAlreadyExists" xml:space="preserve">
     <value>A coupon already exists for SKU '{0}'.</value>
   </data>
+  <data name="CouponNotFound" xml:space="preserve">
+    <value>The coupon was not found.</value>
+  </data>
 </root>

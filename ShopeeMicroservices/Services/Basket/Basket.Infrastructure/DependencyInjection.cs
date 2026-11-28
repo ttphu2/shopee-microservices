@@ -1,6 +1,9 @@
+using Basket.Application.Abstractions.Discount;
 using Basket.Domain.Repositories;
 using Basket.Infrastructure.Data;
 using Basket.Infrastructure.Repositories;
+using Basket.Infrastructure.Services;
+using Discount.Grpc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +21,8 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("Connection string 'Database' is not configured.");
         var redisConnectionString = configuration.GetConnectionString("Redis")
             ?? throw new InvalidOperationException("Connection string 'Redis' is not configured.");
+        var discountUrl = configuration["GrpcSettings:DiscountUrl"]
+            ?? throw new InvalidOperationException("Setting 'GrpcSettings:DiscountUrl' is not configured.");
 
         services.AddDbContext<BasketDbContext>(options => options.UseNpgsql(databaseConnectionString));
 
@@ -32,6 +37,14 @@ public static class DependencyInjection
         services.AddScoped<IBasketRepository>(serviceProvider => new CachedBasketRepository(
             serviceProvider.GetRequiredService<BasketRepository>(),
             serviceProvider.GetRequiredService<IDistributedCache>()));
+
+        services.AddGrpcClient<DiscountProtoService.DiscountProtoServiceClient>(options => options.Address = new Uri(discountUrl))
+        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        });
+
+        services.AddScoped<IDiscountService, DiscountGrpcService>();
 
         // Reported by the /health endpoint.
         services.AddHealthChecks()

@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Discount.Infrastructure.Migrations
 {
     [DbContext(typeof(DiscountDbContext))]
-    [Migration("20261124165614_InitialCreate")]
+    [Migration("20261127165908_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -37,6 +37,10 @@ namespace Discount.Infrastructure.Migrations
                         .HasColumnType("numeric(18,2)");
 
                     b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProductId")
                         .IsRequired()
                         .HasColumnType("text");
 

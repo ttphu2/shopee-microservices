@@ -4,7 +4,6 @@ using Discount.Application.Handlers.DeleteDiscountCommandHandler;
 using Discount.Application.Handlers.GetDiscountQueryHandler;
 using Discount.Application.Handlers.UpdateDiscountCommandHandler;
 using Discount.Domain.ValueObjects;
-using Infrastructure.Errors;
 
 namespace Discount.Grpc.Mappers
 {

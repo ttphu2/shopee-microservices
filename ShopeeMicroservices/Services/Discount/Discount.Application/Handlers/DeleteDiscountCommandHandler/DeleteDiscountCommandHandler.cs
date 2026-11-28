@@ -1,3 +1,4 @@
+using Discount.Application.Errors;
 using Discount.Domain.Repositories;
 using Infrastructure.Abstractions.Messaging;
 using Infrastructure.Errors;
@@ -13,7 +14,7 @@ namespace Discount.Application.Handlers.DeleteDiscountCommandHandler
 
             if (!deleted)
             {
-                return Error.NotFound;
+                return DiscountErrors.CouponNotFound;
             }
 
             return ValidationOutcome.Success();

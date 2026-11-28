@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Discount.Application.Errors;
 using Google.Protobuf.WellKnownTypes;
 using Google.Rpc;
 using Grpc.Core;
@@ -16,8 +17,8 @@ namespace Discount.Grpc.Mappers
 
         private static readonly Dictionary<string, StatusCode> BusinessStatusCodes = new()
         {
-            [Error.NotFound.Code] = StatusCode.NotFound,
-            [Error.AlreadyExists.Code] = StatusCode.AlreadyExists
+            [DiscountErrors.CouponNotFoundCode] = StatusCode.NotFound,
+            [DiscountErrors.CouponAlreadyExistsCode] = StatusCode.AlreadyExists
         };
 
         public static void ThrowIfFailed(this ValidationOutcome outcome)

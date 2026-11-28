@@ -12,4 +12,10 @@ public class ShoppingCartItem
     public decimal Price { get; set; }
 
     public int Quantity { get; set; }
+
+    // The price never goes below 0, even for a coupon larger than the price.
+    public void ApplyDiscount(decimal amount)
+    {
+        Price = Math.Max(0m, Price - amount);
+    }
 }
